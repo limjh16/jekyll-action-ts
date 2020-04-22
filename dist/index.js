@@ -976,7 +976,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.startGroup('bundle install');
-            yield exec.exec('bash scripts/bundle.sh');
+            yield exec.exec('bash', ['scripts/bundle.sh']);
             core.endGroup;
             core.startGroup('jekyll build');
             yield exec.exec('bash scripts/jekyll.sh');
