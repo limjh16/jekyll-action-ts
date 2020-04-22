@@ -4,8 +4,6 @@ echo "::debug ::GitHub Repo: ${GITHUB_REPOSITORY}"
 echo "::debug ::GitHub Ref: ${GITHUB_REF}"
 echo "::debug ::GitHub SHA: ${GITHUB_SHA}"
 echo "::debug ::GitHub Actor: ${GITHUB_ACTOR}"
-echo "::debug ::Remote Branch: ${remote_branch}"
-echo "::debug ::Remote Repo: ${remote_repo}"
 cd build
 touch .nojekyll
 if [[ "${GITHUB_REPOSITORY}" == *".github.io"* ]]; then
