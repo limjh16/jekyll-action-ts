@@ -97,3 +97,14 @@ Thumbs.db
 # Ignore built ts files
 __tests__/runner/*
 lib/**/*
+
+# jekyll files
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor
+build/*
+
+.DS_Store
+*/.DS_Store

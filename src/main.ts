@@ -1,16 +1,17 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import * as exec from '@actions/exec'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`)
-
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
+    core.startGroup('bundle install')
+    await exec.exec('bash scripts/bundle.sh')
+    core.endGroup
+    core.startGroup('jekyll build')
+    await exec.exec('bash scripts/jekyll.sh')
+    core.endGroup
+    core.startGroup('git push')
+    await exec.exec('bash scripts/git-push.sh')
+    core.endGroup
   } catch (error) {
     core.setFailed(error.message)
   }
