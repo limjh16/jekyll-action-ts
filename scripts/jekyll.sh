@@ -1,7 +1,5 @@
 #!/bin/bash
 set -e
-echo "::debug ::${INPUT_JEKYLL_SRC}"
-echo "::debug ::${SRC}"
 if [[ ${INPUT_JEKYLL_SRC} ]]; then
   JEKYLL_SRC=${INPUT_JEKYLL_SRC}
   echo "::debug ::Using parameter value $JEKYLL_SRC as a source directory"
