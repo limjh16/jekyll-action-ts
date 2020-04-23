@@ -972,27 +972,73 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
-const measure_1 = __webpack_require__(333);
+const common_1 = __webpack_require__(865);
+/**
+ * @todo Catch error outputs
+ * @body Seems like GitHub Actions has some powerful tools to help catch unexpected errors
+ * https://github.com/actions/toolkit/tree/master/packages/exec#outputoptions
+ * https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
+ */
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield measure_1.measure({
-                name: 'bundle install',
-                block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/bundle.sh'); })
-            });
+            core.setSecret('JEKYLL_PAT');
+            const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}), SRC = core.getInput('SRC', {}), GITHUB_REPOSITORY = core.getInput('GITHUB_REPOSITORY', { required: true }), GITHUB_REF = core.getInput('GITHUB_REF', { required: true }), GITHUB_ACTOR = core.getInput('GITHUB_ACTOR', { required: true }), GITHUB_SHA = core.getInput('GITHUB_SHA', { required: true }), JEKYLL_PAT = core.getInput('JEKYLL_PAT', { required: true });
             /**
-             * @todo Catch error outputs
-             * @body Seems like GitHub Actions has some powerful tools to help catch unexpected errors
-             * https://github.com/actions/toolkit/tree/master/packages/exec#outputoptions
-             * https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
+             * @todo expose GITHUB_ACTOR, GITHUB_REPOSITORY and remoteBranch for user to set in actions
              */
-            yield measure_1.measure({
-                name: 'jekyll build',
-                block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/jekyll.sh'); })
+            yield common_1.measure({
+                name: 'bundle install',
+                block: () => __awaiter(this, void 0, void 0, function* () {
+                    return yield exec.exec('bundle config path vendor/bundle && bundle install --jobs 4 --retry 3');
+                })
             });
-            yield measure_1.measure({
+            yield common_1.measure({
+                name: 'jekyll build',
+                block: () => __awaiter(this, void 0, void 0, function* () {
+                    core.debug(INPUT_JEKYLL_SRC);
+                    core.debug(SRC);
+                    if (INPUT_JEKYLL_SRC) {
+                        core.exportVariable('JEKYLL_SRC', INPUT_JEKYLL_SRC);
+                        core.debug(`Using parameter value ${INPUT_JEKYLL_SRC} as a source directory`);
+                    }
+                    else if (SRC) {
+                        core.exportVariable('JEKYLL_SRC', SRC);
+                        core.debug(`Using ${SRC} environment var value as a source directory`);
+                    }
+                    else {
+                        yield exec.exec("JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name '_config.yml' -exec dirname {} ;)");
+                    }
+                    yield exec.exec('echo "::debug ::Resolved $JEKYLL_SRC as source directory"');
+                    return yield exec.exec('bundle exec jekyll build -s $JEKYLL_SRC -d build');
+                })
+            });
+            yield common_1.measure({
                 name: 'git push',
-                block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/git-push.sh'); })
+                block: () => __awaiter(this, void 0, void 0, function* () {
+                    yield exec.exec('cd build && touch .nojekyll');
+                    let remoteBranch;
+                    if (GITHUB_REPOSITORY.match('/^*github.io$/')) {
+                        remoteBranch = 'master';
+                    }
+                    else {
+                        remoteBranch = 'gh-pages';
+                    }
+                    if (GITHUB_REF === `refs/heads/${remoteBranch}`) {
+                        core.error(`Cannot publish on branch ${remoteBranch}`);
+                    }
+                    core.debug(`Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`);
+                    const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`;
+                    yield exec.exec(`git init \
+        && git config user.name "${GITHUB_ACTOR}" \
+        && git config user.email "${GITHUB_ACTOR}@users.noreply.github.com" \
+        && git add . \
+        && git commit -m "jekyll build from Action ${GITHUB_SHA}" \
+        && git push --force ${remoteRepo} master:${remoteBranch} \
+        && rm -fr .git \
+        && cd ..`);
+                    return yield exec.exec('bash scripts/git-push.sh');
+                })
             });
         }
         catch (error) {
@@ -1001,53 +1047,6 @@ function run() {
     });
 }
 run();
-
-
-/***/ }),
-
-/***/ 333:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(__webpack_require__(470));
-const perf_hooks_1 = __webpack_require__(630);
-function measure({ name, block }) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield core.group(name, () => __awaiter(this, void 0, void 0, function* () {
-            const start = perf_hooks_1.performance.now();
-            try {
-                yield block();
-            }
-            catch (error) {
-                core.setFailed(error.message);
-            }
-            finally {
-                const end = perf_hooks_1.performance.now();
-                const duration = (end - start) / 1000.0;
-                console.log(`Took ${duration.toFixed(2).padStart(6)} seconds`);
-            }
-        }));
-    });
-}
-exports.measure = measure;
 
 
 /***/ }),
@@ -1568,6 +1567,53 @@ function isUnixExecutable(stats) {
 /***/ (function(module) {
 
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 865:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const perf_hooks_1 = __webpack_require__(630);
+function measure({ name, block }) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield core.group(name, () => __awaiter(this, void 0, void 0, function* () {
+            const start = perf_hooks_1.performance.now();
+            try {
+                yield block();
+            }
+            catch (error) {
+                core.setFailed(error.message);
+            }
+            finally {
+                const end = perf_hooks_1.performance.now();
+                const duration = (end - start) / 1000.0;
+                console.log(`Took ${duration.toFixed(2).padStart(6)} seconds`);
+            }
+        }));
+    });
+}
+exports.measure = measure;
+
 
 /***/ }),
 
