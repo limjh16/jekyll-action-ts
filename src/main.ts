@@ -94,7 +94,7 @@ async function run(): Promise<void> {
         }
         core.debug(`Resolved ${myOutput} as source directory`)
         return await exec.exec(
-          `bundle exec jekyll build --disable-disk-cache -d build -s ${myOutput}`
+          `bundle exec jekyll build -d build -s ${myOutput}`
         )
       }
     })

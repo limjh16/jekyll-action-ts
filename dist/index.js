@@ -1061,7 +1061,7 @@ function run() {
                         core.exportVariable('JEKYLL_SRC', myOutput);
                     }
                     core.debug(`Resolved ${myOutput} as source directory`);
-                    return yield exec.exec(`bundle exec jekyll build --disable-disk-cache -d build -s ${myOutput}`);
+                    return yield exec.exec(`bundle exec jekyll build -d build -s ${myOutput}`);
                 })
             });
             yield common_1.measure({
