@@ -114,16 +114,16 @@ async function run(): Promise<void> {
           `Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`
         )
         const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`
-        const gitRun = `bash -c "cd build \\
+        const gitRun = `bash -c 'cd build \\
         && touch .nojekyll \\
         && git init \\
-        && git config user.name \"${GITHUB_ACTOR}\" \\
-        && git config user.email \"${GITHUB_ACTOR}@users.noreply.github.com\" \\
+        && git config user.name '${GITHUB_ACTOR}' \\
+        && git config user.email '${GITHUB_ACTOR}@users.noreply.github.com' \\
         && git add . \\
-        && git commit -m \"jekyll build from Action ${GITHUB_SHA}\" \\
+        && git commit -m 'jekyll build from Action ${GITHUB_SHA}' \\
         && git push --force ${remoteRepo} master:${remoteBranch} \\
         && rm -fr .git \\
-        && cd .."`
+        && cd ..'`
         core.debug(gitRun)
         return await exec.exec(gitRun)
         //return await exec.exec('bash scripts/git-push.sh')
