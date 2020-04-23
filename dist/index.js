@@ -1033,7 +1033,8 @@ function run() {
             yield common_1.measure({
                 name: 'bundle install',
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    return yield exec.exec('bundle config path vendor/bundle && bundle install --jobs 4 --retry 3');
+                    yield exec.exec('bundle config path vendor/bundle');
+                    return yield exec.exec('bundle install --jobs 4 --retry 3');
                 })
             });
             yield common_1.measure({
@@ -1050,17 +1051,17 @@ function run() {
                         core.debug(`Using ${SRC} environment var value as a source directory`);
                     }
                     else {
-                        yield exec.exec('find . -path ./vendor/bundle -prune -o -name "_config.yml" -exec dirname {} ;', [], options);
-                        core.debug(myError);
+                        try {
+                            yield exec.exec('find . -path ./vendor/bundle -prune -o -name "_config.yml" -exec dirname {} ;', [], options);
+                        }
+                        catch (error) {
+                            core.debug(`error: ${error}`);
+                            core.debug(`myError: ${myError}`);
+                        }
                         core.exportVariable('JEKYLL_SRC', myOutput);
-                        /*
-                        await exec.exec(
-                          "bash JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name '_config.yml' -exec dirname {} ;)"
-                        )
-                        */
                     }
-                    yield exec.exec('echo "::debug ::Resolved $JEKYLL_SRC as source directory"');
-                    return yield exec.exec('bundle exec jekyll build -s $JEKYLL_SRC -d build');
+                    core.debug(`Resolved ${myOutput} as source directory`);
+                    return yield exec.exec(`bundle exec jekyll build -s ${myOutput} -d build`);
                 })
             });
             yield common_1.measure({
