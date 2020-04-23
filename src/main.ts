@@ -102,6 +102,7 @@ async function run(): Promise<void> {
       name: 'git push',
       block: async () => {
         let remoteBranch: string
+        core.debug(GITHUB_REPOSITORY)
         if (GITHUB_REPOSITORY.match(/^[a-z]*\.github\.io$/)) {
           remoteBranch = 'master'
         } else {
@@ -115,7 +116,6 @@ async function run(): Promise<void> {
         )
         const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`
         const gitRun = `bash -c "cd build && touch .nojekyll && git init && git config user.name '${GITHUB_ACTOR}' && git config user.email '${GITHUB_ACTOR}@users.noreply.github.com' && git add . && git commit -m 'jekyll build from Action ${GITHUB_SHA}' && git push --force ${remoteRepo} master:${remoteBranch} && rm -fr .git && cd .."`
-        //core.debug(gitRun)
         return await exec.exec(gitRun)
       }
     })

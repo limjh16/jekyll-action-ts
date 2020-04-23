@@ -1068,6 +1068,7 @@ function run() {
                 name: 'git push',
                 block: () => __awaiter(this, void 0, void 0, function* () {
                     let remoteBranch;
+                    core.debug(GITHUB_REPOSITORY);
                     if (GITHUB_REPOSITORY.match(/^[a-z]*\.github\.io$/)) {
                         remoteBranch = 'master';
                     }
@@ -1080,7 +1081,6 @@ function run() {
                     core.debug(`Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`);
                     const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`;
                     const gitRun = `bash -c "cd build && touch .nojekyll && git init && git config user.name '${GITHUB_ACTOR}' && git config user.email '${GITHUB_ACTOR}@users.noreply.github.com' && git add . && git commit -m 'jekyll build from Action ${GITHUB_SHA}' && git push --force ${remoteRepo} master:${remoteBranch} && rm -fr .git && cd .."`;
-                    //core.debug(gitRun)
                     return yield exec.exec(gitRun);
                 })
             });
