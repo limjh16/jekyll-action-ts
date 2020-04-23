@@ -1,25 +1,6 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
-import {performance} from 'perf_hooks'
-
-export async function measure<T>({
-  name,
-  block
-}: {
-  name: string
-  block: () => Promise<T>
-}): Promise<T> {
-  return await core.group(name, async () => {
-    const start = performance.now()
-    try {
-      return await block()
-    } finally {
-      const end = performance.now()
-      const duration = (end - start) / 1000.0
-      console.log(`Took ${duration.toFixed(2).padStart(6)} seconds`)
-    }
-  })
-}
+import {measure} from './measure'
 
 async function run(): Promise<void> {
   try {
