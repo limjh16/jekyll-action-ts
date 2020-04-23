@@ -976,7 +976,7 @@ const measure_1 = __webpack_require__(333);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            measure_1.measure({
+            yield measure_1.measure({
                 name: 'bundle install',
                 block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/bundle.sh'); })
             });
@@ -986,11 +986,11 @@ function run() {
              * https://github.com/actions/toolkit/tree/master/packages/exec#outputoptions
              * https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
              */
-            measure_1.measure({
+            yield measure_1.measure({
                 name: 'jekyll build',
                 block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/jekyll.sh'); })
             });
-            measure_1.measure({
+            yield measure_1.measure({
                 name: 'git push',
                 block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/git-push.sh'); })
             });

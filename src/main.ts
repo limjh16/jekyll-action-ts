@@ -4,7 +4,7 @@ import {measure} from './measure'
 
 async function run(): Promise<void> {
   try {
-    measure({
+    await measure({
       name: 'bundle install',
       block: async () => exec.exec('bash scripts/bundle.sh')
     })
@@ -14,11 +14,11 @@ async function run(): Promise<void> {
      * https://github.com/actions/toolkit/tree/master/packages/exec#outputoptions
      * https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
      */
-    measure({
+    await measure({
       name: 'jekyll build',
       block: async () => exec.exec('bash scripts/jekyll.sh')
     })
-    measure({
+    await measure({
       name: 'git push',
       block: async () => exec.exec('bash scripts/git-push.sh')
     })
