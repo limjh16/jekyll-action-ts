@@ -1079,7 +1079,7 @@ function run() {
                     }
                     core.debug(`Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`);
                     const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`;
-                    const gitRun = `bash -c 'cd build \\
+                    const gitRun = `bash -c cd build \\
         && touch .nojekyll \\
         && git init \\
         && git config user.name '${GITHUB_ACTOR}' \\
@@ -1088,7 +1088,7 @@ function run() {
         && git commit -m 'jekyll build from Action ${GITHUB_SHA}' \\
         && git push --force ${remoteRepo} master:${remoteBranch} \\
         && rm -fr .git \\
-        && cd ..'`;
+        && cd ..`;
                     core.debug(gitRun);
                     return yield exec.exec(gitRun);
                     //return await exec.exec('bash scripts/git-push.sh')
