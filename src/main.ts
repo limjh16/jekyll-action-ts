@@ -102,7 +102,7 @@ async function run(): Promise<void> {
       name: 'git push',
       block: async () => {
         let remoteBranch: string
-        if (GITHUB_REPOSITORY.match('/^*github.io$/')) {
+        if (GITHUB_REPOSITORY.match(/^[a-z]*\.github\.io$/)) {
           remoteBranch = 'master'
         } else {
           remoteBranch = 'gh-pages'
