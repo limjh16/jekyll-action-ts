@@ -983,8 +983,9 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.setSecret('JEKYLL_PAT');
-            const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}), SRC = core.getInput('SRC', {}), JEKYLL_PAT = core.getInput('JEKYLL_PAT', { required: true });
-            let GITHUB_REPOSITORY, GITHUB_REF, GITHUB_ACTOR, GITHUB_SHA;
+            core.setSecret('process.env.JEKYLL_PAT');
+            const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}), SRC = core.getInput('SRC', {});
+            let GITHUB_REPOSITORY, GITHUB_REF, GITHUB_ACTOR, GITHUB_SHA, JEKYLL_PAT;
             if (typeof process.env.GITHUB_REPOSITORY === 'string') {
                 GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY;
             }
@@ -1008,6 +1009,12 @@ function run() {
             }
             else {
                 core.error('process.env.GITHUB_SHA is not a string!');
+            }
+            if (typeof process.env.JEKYLL_PAT === 'string') {
+                JEKYLL_PAT = process.env.JEKYLL_PAT;
+            }
+            else {
+                core.error('process.env.JEKYLL_PAT is not a string!');
             }
             /**
              * @todo expose GITHUB_ACTOR, GITHUB_REPOSITORY and remoteBranch for user to set in actions

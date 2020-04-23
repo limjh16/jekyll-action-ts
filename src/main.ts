@@ -10,13 +10,14 @@ import {measure} from './common'
 async function run(): Promise<void> {
   try {
     core.setSecret('JEKYLL_PAT')
+    core.setSecret('process.env.JEKYLL_PAT')
     const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}),
-      SRC = core.getInput('SRC', {}),
-      JEKYLL_PAT = core.getInput('JEKYLL_PAT', {required: true})
+      SRC = core.getInput('SRC', {})
     let GITHUB_REPOSITORY: string,
       GITHUB_REF: string,
       GITHUB_ACTOR: string,
-      GITHUB_SHA: string
+      GITHUB_SHA: string,
+      JEKYLL_PAT: string
     if (typeof process.env.GITHUB_REPOSITORY === 'string') {
       GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY
     } else {
@@ -36,6 +37,11 @@ async function run(): Promise<void> {
       GITHUB_SHA = process.env.GITHUB_SHA
     } else {
       core.error('process.env.GITHUB_SHA is not a string!')
+    }
+    if (typeof process.env.JEKYLL_PAT === 'string') {
+      JEKYLL_PAT = process.env.JEKYLL_PAT
+    } else {
+      core.error('process.env.JEKYLL_PAT is not a string!')
     }
     /**
      * @todo expose GITHUB_ACTOR, GITHUB_REPOSITORY and remoteBranch for user to set in actions
