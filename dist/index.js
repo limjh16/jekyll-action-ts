@@ -1061,7 +1061,7 @@ function run() {
                         core.exportVariable('JEKYLL_SRC', myOutput);
                     }
                     core.debug(`Resolved ${myOutput} as source directory`);
-                    return yield exec.exec(`bundle exec jekyll build -s ${myOutput} -d build`);
+                    return yield exec.exec(`bundle exec jekyll build --disable-disk-cache -d build -s ${myOutput}`);
                 })
             });
             yield common_1.measure({
@@ -1079,7 +1079,7 @@ function run() {
                     }
                     core.debug(`Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`);
                     const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`;
-                    yield exec.exec(`cd build \
+                    return yield exec.exec(`bash -c "cd build \
         && touch .nojekyll \
         && git init \
         && git config user.name "${GITHUB_ACTOR}" \
@@ -1088,8 +1088,8 @@ function run() {
         && git commit -m "jekyll build from Action ${GITHUB_SHA}" \
         && git push --force ${remoteRepo} master:${remoteBranch} \
         && rm -fr .git \
-        && cd ..`);
-                    return yield exec.exec('bash scripts/git-push.sh');
+        && cd .."`);
+                    //return await exec.exec('bash scripts/git-push.sh')
                 })
             });
         }
