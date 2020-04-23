@@ -1068,8 +1068,7 @@ function run() {
                 name: 'git push',
                 block: () => __awaiter(this, void 0, void 0, function* () {
                     let remoteBranch;
-                    core.debug(GITHUB_REPOSITORY);
-                    if (GITHUB_REPOSITORY.match(/^[a-z]*\.github\.io$/)) {
+                    if (GITHUB_REPOSITORY.match(/^[a-z]*\/[a-z]*\.github\.io$/)) {
                         remoteBranch = 'master';
                     }
                     else {
