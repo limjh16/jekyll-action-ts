@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {measure} from './common'
+import {ExecOptions} from '@actions/exec/lib/interfaces'
 /**
  * @todo Catch error outputs
  * @body Seems like GitHub Actions has some powerful tools to help catch unexpected errors
@@ -9,6 +10,18 @@ import {measure} from './common'
  */
 async function run(): Promise<void> {
   try {
+    let myOutput = ''
+    let myError = ''
+    const options: ExecOptions = {}
+    options.listeners = {
+      stdout: (data: Buffer) => {
+        myOutput += data.toString()
+      },
+      stderr: (data: Buffer) => {
+        myError += data.toString()
+      }
+    }
+
     core.setSecret('JEKYLL_PAT')
     core.setSecret('process.env.JEKYLL_PAT')
     const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}),
@@ -69,8 +82,17 @@ async function run(): Promise<void> {
           core.debug(`Using ${SRC} environment var value as a source directory`)
         } else {
           await exec.exec(
-            "JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name '_config.yml' -exec dirname {} ;)"
+            'find . -path ./vendor/bundle -prune -o -name "_config.yml" -exec dirname {} ;',
+            [],
+            options
           )
+          core.debug(myError)
+          core.exportVariable('JEKYLL_SRC', myOutput)
+          /*
+          await exec.exec(
+            "bash JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name '_config.yml' -exec dirname {} ;)"
+          )
+          */
         }
         await exec.exec(
           'echo "::debug ::Resolved $JEKYLL_SRC as source directory"'
@@ -83,7 +105,6 @@ async function run(): Promise<void> {
     await measure({
       name: 'git push',
       block: async () => {
-        await exec.exec('cd build && touch .nojekyll')
         let remoteBranch: string
         if (GITHUB_REPOSITORY.match('/^*github.io$/')) {
           remoteBranch = 'master'
@@ -97,7 +118,9 @@ async function run(): Promise<void> {
           `Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`
         )
         const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`
-        await exec.exec(`git init \
+        await exec.exec(`cd build \
+        && touch .nojekyll \
+        && git init \
         && git config user.name "${GITHUB_ACTOR}" \
         && git config user.email "${GITHUB_ACTOR}@users.noreply.github.com" \
         && git add . \

@@ -982,6 +982,17 @@ const common_1 = __webpack_require__(865);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            let myOutput = '';
+            let myError = '';
+            const options = {};
+            options.listeners = {
+                stdout: (data) => {
+                    myOutput += data.toString();
+                },
+                stderr: (data) => {
+                    myError += data.toString();
+                }
+            };
             core.setSecret('JEKYLL_PAT');
             core.setSecret('process.env.JEKYLL_PAT');
             const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}), SRC = core.getInput('SRC', {});
@@ -1039,7 +1050,14 @@ function run() {
                         core.debug(`Using ${SRC} environment var value as a source directory`);
                     }
                     else {
-                        yield exec.exec("JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name '_config.yml' -exec dirname {} ;)");
+                        yield exec.exec('find . -path ./vendor/bundle -prune -o -name "_config.yml" -exec dirname {} ;', [], options);
+                        core.debug(myError);
+                        core.exportVariable('JEKYLL_SRC', myOutput);
+                        /*
+                        await exec.exec(
+                          "bash JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name '_config.yml' -exec dirname {} ;)"
+                        )
+                        */
                     }
                     yield exec.exec('echo "::debug ::Resolved $JEKYLL_SRC as source directory"');
                     return yield exec.exec('bundle exec jekyll build -s $JEKYLL_SRC -d build');
@@ -1048,7 +1066,6 @@ function run() {
             yield common_1.measure({
                 name: 'git push',
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    yield exec.exec('cd build && touch .nojekyll');
                     let remoteBranch;
                     if (GITHUB_REPOSITORY.match('/^*github.io$/')) {
                         remoteBranch = 'master';
@@ -1061,7 +1078,9 @@ function run() {
                     }
                     core.debug(`Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`);
                     const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`;
-                    yield exec.exec(`git init \
+                    yield exec.exec(`cd build \
+        && touch .nojekyll \
+        && git init \
         && git config user.name "${GITHUB_ACTOR}" \
         && git config user.email "${GITHUB_ACTOR}@users.noreply.github.com" \
         && git add . \
