@@ -16,7 +16,7 @@ export async function measure<T>({
     } finally {
       const end = performance.now()
       const duration = (end - start) / 1000.0
-      console.log(`Took ${duration.toFixed(2).padStart(6)} seconds`)
+      core.info(`Took ${duration.toFixed(2).padStart(6)} seconds`)
     }
   })
 }

@@ -12,11 +12,31 @@ async function run(): Promise<void> {
     core.setSecret('JEKYLL_PAT')
     const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {}),
-      GITHUB_REPOSITORY = core.getInput('GITHUB_REPOSITORY', {required: true}),
-      GITHUB_REF = core.getInput('GITHUB_REF', {required: true}),
-      GITHUB_ACTOR = core.getInput('GITHUB_ACTOR', {required: true}),
-      GITHUB_SHA = core.getInput('GITHUB_SHA', {required: true}),
       JEKYLL_PAT = core.getInput('JEKYLL_PAT', {required: true})
+    let GITHUB_REPOSITORY: string,
+      GITHUB_REF: string,
+      GITHUB_ACTOR: string,
+      GITHUB_SHA: string
+    if (typeof process.env.GITHUB_REPOSITORY === 'string') {
+      GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY
+    } else {
+      core.error('process.env.GITHUB_REPOSITORY is not a string!')
+    }
+    if (typeof process.env.GITHUB_REF === 'string') {
+      GITHUB_REF = process.env.GITHUB_REF
+    } else {
+      core.error('process.env.GITHUB_REF is not a string!')
+    }
+    if (typeof process.env.GITHUB_ACTOR === 'string') {
+      GITHUB_ACTOR = process.env.GITHUB_ACTOR
+    } else {
+      core.error('process.env.GITHUB_REPOSGITHUB_ACTORITORY is not a string!')
+    }
+    if (typeof process.env.GITHUB_SHA === 'string') {
+      GITHUB_SHA = process.env.GITHUB_SHA
+    } else {
+      core.error('process.env.GITHUB_SHA is not a string!')
+    }
     /**
      * @todo expose GITHUB_ACTOR, GITHUB_REPOSITORY and remoteBranch for user to set in actions
      */
