@@ -972,30 +972,44 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
+const perf_hooks_1 = __webpack_require__(630);
+function measure({ name, block }) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield core.group(name, () => __awaiter(this, void 0, void 0, function* () {
+            const start = perf_hooks_1.performance.now();
+            try {
+                return yield block();
+            }
+            finally {
+                const end = perf_hooks_1.performance.now();
+                const duration = (end - start) / 1000.0;
+                console.log(`Took ${duration.toFixed(2).padStart(6)} seconds`);
+            }
+        }));
+    });
+}
+exports.measure = measure;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            core.startGroup('bundle install');
-            yield exec.exec('bash scripts/bundle.sh');
-            /**
-             * @todo Cache bundler files using @actions/tool-cache
-             * @body This provides more flexibility over using actions/cache@v1,
-             * since bundler may update some Gemfile files but are unable to edit Gemfile.lock.
-             * https://github.com/actions/toolkit/tree/master/packages/tool-cache
-             */
+            measure({
+                name: 'bundle install',
+                block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/bundle.sh'); })
+            });
             /**
              * @todo Catch error outputs
              * @body Seems like GitHub Actions has some powerful tools to help catch unexpected errors
              * https://github.com/actions/toolkit/tree/master/packages/exec#outputoptions
              * https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
              */
-            core.endGroup;
-            core.startGroup('jekyll build');
-            yield exec.exec('bash scripts/jekyll.sh');
-            core.endGroup;
-            core.startGroup('git push');
-            yield exec.exec('bash scripts/git-push.sh');
-            core.endGroup;
+            measure({
+                name: 'jekyll build',
+                block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/jekyll.sh'); })
+            });
+            measure({
+                name: 'git push',
+                block: () => __awaiter(this, void 0, void 0, function* () { return exec.exec('bash scripts/git-push.sh'); })
+            });
         }
         catch (error) {
             core.setFailed(error.message);
@@ -1300,6 +1314,13 @@ module.exports = require("events");
 /***/ (function(module) {
 
 module.exports = require("path");
+
+/***/ }),
+
+/***/ 630:
+/***/ (function(module) {
+
+module.exports = require("perf_hooks");
 
 /***/ }),
 
