@@ -31,8 +31,8 @@ jobs:
     - name: Cache jekyll files
       uses: actions/cache@v1
       with:
-        path: ${{needs.build.outputs.output1}}/.jekyll-cache
-        key: tstest-${{ runner.os }}-jekyll-${{needs.build.outputs.output2}}
+        path: ${{{{needs.build.outputs.output1}}}}/.jekyll-cache
+        key: tstest-${{ runner.os }}-jekyll-${{{{needs.build.outputs.output2}}}}
         restore-keys: |
           tstest-${{ runner.os }}-jekyll-
     - name: Set up Ruby 2.6
@@ -40,8 +40,8 @@ jobs:
       with:
         ruby-version: 2.6
     - uses: ./
-      with:
-        jekyll_src: ${{needs.build.outputs.output1}}
+      #with:
+      #  jekyll_src: ${{needs.build.outputs.output1}}
     - name: Deploy
       # publish docs only when PR is merged on master
       if: github.event_name == 'push'
