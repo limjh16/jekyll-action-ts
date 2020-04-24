@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - id: step1
+    - id: find
       name: Find jekyll directory
       run: |
         JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
@@ -28,8 +28,8 @@ jobs:
     - name: Cache jekyll files
       uses: actions/cache@v1
       with:
-        path: ${{steps.build.outputs.src}}/.jekyll-cache
-        key: tstest-${{ runner.os }}-jekyll-${{steps.build.outputs.hash}}
+        path: ${{steps.find.outputs.jekyllSrc}}/.jekyll-cache
+        key: tstest-${{ runner.os }}-jekyll-${{steps.find.outputs.jekyllHash}}
         restore-keys: |
           tstest-${{ runner.os }}-jekyll-
     - name: Set up Ruby 2.6
@@ -38,7 +38,7 @@ jobs:
         ruby-version: 2.6
     - uses: ./
       with:
-        jekyll_src: ${{steps.build.outputs.src}}
+        jekyll_src: ${{steps.find.outputs.jekyllSrc}}
     - name: Deploy
       if: github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v3
