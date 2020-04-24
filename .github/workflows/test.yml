@@ -9,9 +9,9 @@ on: # rebuild any PRs and main branch changes
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      src: ${{ steps.step1.outputs.jekyllSrc }}
-      hash: ${{ steps.step1.outputs.jekyllHash }}
+    env:
+      JEKYLL_SRC: ""
+      JEKYLL_HASH: ""
     steps:
     - uses: actions/checkout@v2
     - id: step1
@@ -19,8 +19,6 @@ jobs:
       run: |
         JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
         JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
-        echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
-        echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
     - name: Cache bundle files
       uses: actions/cache@v1
       with:
@@ -31,8 +29,8 @@ jobs:
     - name: Cache jekyll files
       uses: actions/cache@v1
       with:
-        path: ${{build.outputs.src}}/.jekyll-cache
-        key: tstest-${{ runner.os }}-jekyll-${{build.outputs.hash}}
+        path: ${{JEKYLL_SRC}}/.jekyll-cache
+        key: tstest-${{ runner.os }}-jekyll-${{JEKYLL_HASH}}
         restore-keys: |
           tstest-${{ runner.os }}-jekyll-
     - name: Set up Ruby 2.6
@@ -41,7 +39,7 @@ jobs:
         ruby-version: 2.6
     - uses: ./
       with:
-        jekyll_src: ${{build.outputs.src}}
+        jekyll_src: ${{JEKYLL_SRC}}
     - name: Deploy
       if: github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v3
