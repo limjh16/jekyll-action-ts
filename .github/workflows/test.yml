@@ -6,42 +6,51 @@ on: # rebuild any PRs and main branch changes
       - master
       - test-ts
 
+runs-on: ubuntu-latest
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  setup:
     outputs:
-      output1: ${{ steps.step1.outputs.jekyllSrc }}
-      output2: ${{ steps.step1.outputs.jekyllHash }}
+      src: ${{ steps.findJekyll.outputs.jekyllSrc }}
+      hash: ${{ steps.findJekyll.outputs.jekyllHash }}
     steps:
     - uses: actions/checkout@v2
-    - id: step1
-      name: Find jekyll directory
+    - id: findJekyll
+      name: find jekyll directory
       run: |
         JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
         JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
         echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
         echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
-    - name: Cache bundle files
+    - name: Set up Ruby 2.7
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.7
+
+  cache:
+    needs: setup
+    steps:
+    - name: cache bundle files
       uses: actions/cache@v1
       with:
         path: vendor/bundle
         key: tstest-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
         restore-keys: |
           tstest-${{ runner.os }}-gems-
-    - name: Cache jekyll files
+    - name: cache jekyll files
       uses: actions/cache@v1
       with:
-        path: ${{needs.build.outputs.output1}}/.jekyll-cache
-        key: tstest-${{ runner.os }}-jekyll-${{needs.build.outputs.output2}}
+        path: ${{needs.setup.outputs.src}}/.jekyll-cache
+        key: tstest-${{ runner.os }}-jekyll-${{needs.setup.outputs.hash}}
         restore-keys: |
           tstest-${{ runner.os }}-jekyll-
-    - name: Set up Ruby 2.6
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.6
+
+  build-deploy:
+    needs: [setup, cache]
+    steps:
     - uses: ./
-      #with:
-      #  jekyll_src: ${{needs.build.outputs.output1}}
+      with:
+        jekyll_src: ${{needs.setup.outputs.src}}
     - name: Deploy
       if: github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v3
