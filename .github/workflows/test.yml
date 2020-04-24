@@ -18,8 +18,9 @@ jobs:
       name: Find jekyll directory
       run: |
         JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
+        JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
         echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
-        echo "::set-output name=jekyllHash::ls -alR --full-time ${JEKYLL_SRC} | sha1sum"
+        echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
     - name: Cache bundle files
       uses: actions/cache@v1
       with:
@@ -39,6 +40,8 @@ jobs:
       with:
         ruby-version: 2.6
     - uses: ./
+      with:
+        jekyll_src: ${{needs.build.outputs.output1}}
     - name: Deploy
       # publish docs only when PR is merged on master
       if: github.event_name == 'push'

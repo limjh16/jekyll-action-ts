@@ -22,10 +22,6 @@ async function run(): Promise<void> {
       }
     }
 
-    if (process.env.JEKYLL_SRC) {
-      jekyllSrc = process.env.JEKYLL_SRC
-    }
-
     const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {})
     await measure({
@@ -40,9 +36,7 @@ async function run(): Promise<void> {
       block: async () => {
         core.debug(INPUT_JEKYLL_SRC)
         core.debug(SRC)
-        if (jekyllSrc) {
-          core.debug(`${jekyllSrc} derived from previous workflow step`)
-        } else if (INPUT_JEKYLL_SRC) {
+        if (INPUT_JEKYLL_SRC) {
           jekyllSrc = INPUT_JEKYLL_SRC
           core.debug(`Using parameter value ${jekyllSrc} as a source directory`)
         } else if (SRC) {
@@ -53,7 +47,7 @@ async function run(): Promise<void> {
         } else {
           try {
             await exec.exec(
-              "find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \\; | tr -d '\n'",
+              'bash -c "find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \\; | tr -d \'\n\'"',
               [],
               options
             )
