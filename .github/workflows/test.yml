@@ -7,51 +7,41 @@ on: # rebuild any PRs and main branch changes
       - test-ts
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
     outputs:
-      src: ${{ steps.findJekyll.outputs.jekyllSrc }}
-      hash: ${{ steps.findJekyll.outputs.jekyllHash }}
+      src: ${{ steps.step1.outputs.jekyllSrc }}
+      hash: ${{ steps.step1.outputs.jekyllHash }}
     steps:
     - uses: actions/checkout@v2
-    - id: findJekyll
-      name: find jekyll directory
+    - id: step1
+      name: Find jekyll directory
       run: |
         JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
         JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
         echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
         echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
-    - name: Set up Ruby 2.7
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.7
-
-  cache:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-    - name: cache bundle files
+    - name: Cache bundle files
       uses: actions/cache@v1
       with:
         path: vendor/bundle
         key: tstest-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
         restore-keys: |
           tstest-${{ runner.os }}-gems-
-    - name: cache jekyll files
+    - name: Cache jekyll files
       uses: actions/cache@v1
       with:
-        path: ${{needs.setup.outputs.src}}/.jekyll-cache
-        key: tstest-${{ runner.os }}-jekyll-${{needs.setup.outputs.hash}}
+        path: ${{build.outputs.src}}/.jekyll-cache
+        key: tstest-${{ runner.os }}-jekyll-${{build.outputs.hash}}
         restore-keys: |
           tstest-${{ runner.os }}-jekyll-
-
-  build-deploy:
-    runs-on: ubuntu-latest
-    needs: [setup, cache]
-    steps:
+    - name: Set up Ruby 2.6
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.6
     - uses: ./
       with:
-        jekyll_src: ${{needs.setup.outputs.src}}
+        jekyll_src: ${{build.outputs.src}}
     - name: Deploy
       if: github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v3
