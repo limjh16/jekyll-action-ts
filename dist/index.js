@@ -982,17 +982,20 @@ const common_1 = __webpack_require__(865);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let myOutput = '';
+            let jekyllSrc = '';
             let myError = '';
             const options = {};
             options.listeners = {
                 stdout: (data) => {
-                    myOutput += data.toString();
+                    jekyllSrc += data.toString();
                 },
                 stderr: (data) => {
                     myError += data.toString();
                 }
             };
+            if (process.env.JEKYLL_SRC) {
+                jekyllSrc = process.env.JEKYLL_SRC;
+            }
             const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}), SRC = core.getInput('SRC', {});
             yield common_1.measure({
                 name: 'bundle install',
@@ -1006,26 +1009,28 @@ function run() {
                 block: () => __awaiter(this, void 0, void 0, function* () {
                     core.debug(INPUT_JEKYLL_SRC);
                     core.debug(SRC);
-                    if (INPUT_JEKYLL_SRC) {
-                        core.exportVariable('JEKYLL_SRC', INPUT_JEKYLL_SRC);
-                        core.debug(`Using parameter value ${INPUT_JEKYLL_SRC} as a source directory`);
+                    if (jekyllSrc) {
+                        core.debug(`${jekyllSrc} derived from previous workflow step`);
+                    }
+                    else if (INPUT_JEKYLL_SRC) {
+                        jekyllSrc = INPUT_JEKYLL_SRC;
+                        core.debug(`Using parameter value ${jekyllSrc} as a source directory`);
                     }
                     else if (SRC) {
-                        core.exportVariable('JEKYLL_SRC', SRC);
-                        core.debug(`Using ${SRC} environment var value as a source directory`);
+                        jekyllSrc = SRC;
+                        core.debug(`Using ${jekyllSrc} environment var value as a source directory`);
                     }
                     else {
                         try {
-                            yield exec.exec('find . -path ./vendor/bundle -prune -o -name "_config.yml" -exec dirname {} ;', [], options);
+                            yield exec.exec("find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \\; | tr -d '\n'", [], options);
                         }
                         catch (error) {
                             core.debug(`error: ${error}`);
                             core.debug(`myError: ${myError}`);
                         }
-                        core.exportVariable('JEKYLL_SRC', myOutput);
                     }
-                    core.debug(`Resolved ${myOutput} as source directory`);
-                    return yield exec.exec(`bundle exec jekyll build -d build -s ${myOutput}`);
+                    core.debug(`Resolved ${jekyllSrc} as source directory`);
+                    return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
                 })
             });
         }

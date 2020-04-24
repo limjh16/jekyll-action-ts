@@ -9,8 +9,17 @@ on: # rebuild any PRs and main branch changes
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.step1.outputs.jekyllSrc }}
+      output2: ${{ steps.step1.outputs.jekyllHash }}
     steps:
     - uses: actions/checkout@v2
+    - id: step1
+      name: Find jekyll directory
+      run: |
+        JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
+        echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
+        echo "::set-output name=jekyllHash::ls -alR --full-time ${JEKYLL_SRC} | sha1sum"
     - name: Cache bundle files
       uses: actions/cache@v1
       with:
@@ -18,6 +27,13 @@ jobs:
         key: tstest-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
         restore-keys: |
           tstest-${{ runner.os }}-gems-
+    - name: Cache jekyll files
+      uses: actions/cache@v1
+      with:
+        path: ${{needs.build.outputs.output1}}/.jekyll-cache
+        key: tstest-${{ runner.os }}-jekyll-${{needs.build.outputs.output2}}
+        restore-keys: |
+          tstest-${{ runner.os }}-jekyll-
     - name: Set up Ruby 2.6
       uses: ruby/setup-ruby@v1
       with:
@@ -29,4 +45,4 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
+        publish_dir: ./_site
