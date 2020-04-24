@@ -993,7 +993,7 @@ function run() {
                     myError += data.toString();
                 }
             };
-            const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}), SRC = core.getInput('SRC', {});
+            const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}), SRC = core.getInput('SRC', {});
             yield common_1.measure({
                 name: 'bundle install',
                 block: () => __awaiter(this, void 0, void 0, function* () {

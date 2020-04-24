@@ -22,7 +22,7 @@ async function run(): Promise<void> {
       }
     }
 
-    const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}),
+    const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {})
     await measure({
       name: 'bundle install',
