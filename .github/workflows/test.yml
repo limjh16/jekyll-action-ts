@@ -6,9 +6,9 @@ on: # rebuild any PRs and main branch changes
       - master
       - test-ts
 
-runs-on: ubuntu-latest
-
 jobs:
+  runs-on: ubuntu-latest
+
   setup:
     outputs:
       src: ${{ steps.findJekyll.outputs.jekyllSrc }}
