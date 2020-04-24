@@ -23,5 +23,10 @@ jobs:
       with:
         ruby-version: 2.6
     - uses: ./
-      env:
-        JEKYLL_PAT: ${{ secrets.JEKYLL_PAT }}
+    - name: Deploy
+      # publish docs only when PR is merged on master
+      if: github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build

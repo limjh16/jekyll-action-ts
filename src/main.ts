@@ -22,43 +22,8 @@ async function run(): Promise<void> {
       }
     }
 
-    core.setSecret('JEKYLL_PAT')
-    core.setSecret('process.env.JEKYLL_PAT')
     const INPUT_JEKYLL_SRC = core.getInput('INPUT_JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {})
-    let GITHUB_REPOSITORY: string,
-      GITHUB_REF: string,
-      GITHUB_ACTOR: string,
-      GITHUB_SHA: string,
-      JEKYLL_PAT: string
-    if (typeof process.env.GITHUB_REPOSITORY === 'string') {
-      GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY
-    } else {
-      core.error('process.env.GITHUB_REPOSITORY is not a string!')
-    }
-    if (typeof process.env.GITHUB_REF === 'string') {
-      GITHUB_REF = process.env.GITHUB_REF
-    } else {
-      core.error('process.env.GITHUB_REF is not a string!')
-    }
-    if (typeof process.env.GITHUB_ACTOR === 'string') {
-      GITHUB_ACTOR = process.env.GITHUB_ACTOR
-    } else {
-      core.error('process.env.GITHUB_REPOSGITHUB_ACTORITORY is not a string!')
-    }
-    if (typeof process.env.GITHUB_SHA === 'string') {
-      GITHUB_SHA = process.env.GITHUB_SHA
-    } else {
-      core.error('process.env.GITHUB_SHA is not a string!')
-    }
-    if (typeof process.env.JEKYLL_PAT === 'string') {
-      JEKYLL_PAT = process.env.JEKYLL_PAT
-    } else {
-      core.error('process.env.JEKYLL_PAT is not a string!')
-    }
-    /**
-     * @todo expose GITHUB_ACTOR, GITHUB_REPOSITORY and remoteBranch for user to set in actions
-     */
     await measure({
       name: 'bundle install',
       block: async () => {
@@ -96,26 +61,6 @@ async function run(): Promise<void> {
         return await exec.exec(
           `bundle exec jekyll build -d build -s ${myOutput}`
         )
-      }
-    })
-    await measure({
-      name: 'git push',
-      block: async () => {
-        let remoteBranch: string
-        if (GITHUB_REPOSITORY.match(/^[a-z]*\/[a-z]*\.github\.io$/)) {
-          remoteBranch = 'master'
-        } else {
-          remoteBranch = 'gh-pages'
-        }
-        if (GITHUB_REF === `refs/heads/${remoteBranch}`) {
-          core.error(`Cannot publish on branch ${remoteBranch}`)
-        }
-        core.debug(
-          `Publishing to ${GITHUB_REPOSITORY} on branch ${remoteBranch}`
-        )
-        const remoteRepo = `https://${JEKYLL_PAT}@github.com/${GITHUB_REPOSITORY}.git`
-        const gitRun = `bash -c "cd build && touch .nojekyll && git init && git config user.name '${GITHUB_ACTOR}' && git config user.email '${GITHUB_ACTOR}@users.noreply.github.com' && git add . && git commit -m 'jekyll build from Action ${GITHUB_SHA}' && git push --force ${remoteRepo} master:${remoteBranch} && rm -fr .git && cd .."`
-        return await exec.exec(gitRun)
       }
     })
   } catch (error) {
