@@ -1,7 +1,15 @@
-# jekyll-action
+# jekyll-action-ts
 A GitHub Action to build and publish Jekyll sites to GitHub Pages
 
 Out-of-the-box Jekyll with GitHub Pages allows you to leverage a limited, white-listed, set of gems. Complex sites requiring custom ones or non white-listed ones (AsciiDoc for intstance) used to require a continuous integration build in order to pre-process the site.
+
+## About this version
+Originated from https://github.com/helaili/jekyll-action, however this has been converted from a Docker action to a typescript/js action to cut down on the Docker initialisation time, as well as to use https://github.com/ruby/setup-ruby to automatically select bundler version. 
+
+## Official jekyll tutorial
+If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/continuous-integration/github-actions/) (or [here](https://deploy-preview-8119--jekyllrb.netlify.app/docs/continuous-integration/github-actions/) if that link does not work yet), just replace "helaili/jekyll-action@2.0" with "limjh16/jekyll-action-ts@v1". Also need to add a "setup-ruby" action before this. For an example, scroll down to see the [sample workflow file](#Create-a-Gemfile).
+
+(optional) Can also add caching to decrease build time, scroll down to the [sample workflow file](#Create-a-Gemfile) for an example.
 
 ## Usage
 
@@ -40,7 +48,7 @@ asciidoctor:
 Note that we also renamed `index.html` to `index.adoc` and modified this file accordingly in order to leverage AsciiDoc.
 
 ### Use the action
-Use the `helaili/jekyll-action@master` action in your workflow file. It needs access to a `JEKYLL_PAT` secret set with a Personal Access Token. The directory where the Jekyll site lives will be detected (based on the location of `_config.yml`) but you can also explicitly set this directory by setting the `jekyll_src` parameter (`sample_site` for us). The `SRC` environment variable is also supported for backward compatibilty but it is deprecated.
+Use the `limjh16/jekyll-action-ts@v1` and `ruby/setup-ruby@v1` action in your workflow file. It needs access to a `JEKYLL_PAT` secret set with a Personal Access Token. The directory where the Jekyll site lives will be detected (based on the location of `_config.yml`) but you can also explicitly set this directory by setting the `jekyll_src` parameter (`sample_site` for us). The `SRC` environment variable is also supported for backward compatibilty but it is deprecated.
 
 Use the `actions/cache` action in the workflow as well, to shorten build times and decrease load on GitHub's servers
 
@@ -64,15 +72,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gems-
 
-    # Standard usage
-    - uses:  helaili/jekyll-action@2.0.0
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.7
+
+    - uses:  limjh16/jekyll-action-ts@v1
       env:
         JEKYLL_PAT: ${{ secrets.JEKYLL_PAT }}
-    
-    # Specify the Jekyll source location as a parameter
-    - uses: helaili/jekyll-action@2.0.0
-      env:
-        JEKYLL_PAT: ${{ secrets.JEKYLL_PAT }}
+	# Only add below to specify the Jekyll source location as a parameter
+	# By default, the directory will be detected automatically so this is not needed
       with:
         jekyll_src: 'sample_site'
 ```
