@@ -1024,13 +1024,7 @@ function run() {
                         }
                     }
                     core.debug(`Resolved ${jekyllSrc} as source directory`);
-                    if (process.env.JEKYLL_ENV) {
-                        core.debug(`JEKYLL_ENV: ${process.env.JEKYLL_ENV}`);
-                    }
                     core.exportVariable('JEKYLL_ENV', 'production');
-                    if (process.env.JEKYLL_ENV) {
-                        core.debug(`JEKYLL_ENV: ${process.env.JEKYLL_ENV}`);
-                    }
                     return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
                 })
             });
