@@ -1,18 +1,15 @@
-name: "build-test"
-on: # rebuild any PRs and main branch changes
-  pull_request:
-  push:
-    branches:
-      - master
-      - test-ts
+name: Build and deploy jekyll site
 
+on:
+  push
+    
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  jekyll:
+    runs-on: ubuntu-16.04 # can change this to ubuntu-latest if you prefer
     steps:
     - uses: actions/checkout@v2
     - id: find
-      name: Find jekyll directory
+      name: Find jekyll directory # this step is needed to provide the cache directory and cache hash key
       run: |
         JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
         JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
@@ -22,21 +19,22 @@ jobs:
       uses: actions/cache@v1
       with:
         path: vendor/bundle
-        key: tstest-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+        key: ts-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
         restore-keys: |
-          tstest-${{ runner.os }}-gems-
+          ts-${{ runner.os }}-gems-
     - name: Cache jekyll files
       uses: actions/cache@v1
       with:
         path: ${{steps.find.outputs.jekyllSrc}}/.jekyll-cache
-        key: tstest-${{ runner.os }}-jekyll-${{steps.find.outputs.jekyllHash}}
+        key: ts-${{ runner.os }}-jekyll-${{steps.find.outputs.jekyllHash}}
         restore-keys: |
-          tstest-${{ runner.os }}-jekyll-
+          ts-${{ runner.os }}-jekyll-
     - name: Set up Ruby 2.6
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.6
-    - uses: ./
+        ruby-version: 2.6 # can change this to 2.7 or whatever version you prefer
+    - name: Build jekyll site
+      uses: limjh16/jekyll-action-ts@v2
       with:
         jekyll_src: ${{steps.find.outputs.jekyllSrc}}
     - name: Deploy
@@ -45,3 +43,6 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./_site
+        # if the repo you are deploying to is <username>.github.io, uncomment the line below.
+        # if you are including the line below, make sure your source files are NOT in the master branch
+        #publish_branch: master

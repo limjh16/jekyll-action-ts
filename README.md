@@ -6,10 +6,12 @@ Out-of-the-box Jekyll with GitHub Pages allows you to leverage a limited, white-
 ## About this version
 Originated from https://github.com/helaili/jekyll-action, however this has been converted from a Docker action to a typescript/js action to cut down on the Docker initialisation time, as well as to use https://github.com/ruby/setup-ruby to automatically select bundler version. 
 
-## Official jekyll tutorial
-If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/continuous-integration/github-actions/) (or [here](https://deploy-preview-8119--jekyllrb.netlify.app/docs/continuous-integration/github-actions/) if that link does not work yet), just replace "helaili/jekyll-action@2.0" with "limjh16/jekyll-action-ts@v1". Also need to add a "setup-ruby" action before this. For an example, scroll down to see the [sample workflow file](#Create-a-Gemfile).
+V2 of this action removes the `git push` step from this action, and instead uses https://github.com/peaceiris/actions-gh-pages for more flexibility (you can choose the committer, the repository, etc.). It is also able to cache the .jekyll-cache folder which may help with very large websites. 
 
-(optional) Can also add caching to decrease build time, scroll down to the [sample workflow file](#Create-a-Gemfile) for an example.
+## Official jekyll tutorial
+V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide. 
+
+If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/continuous-integration/github-actions/) (or [here](https://deploy-preview-8119--jekyllrb.netlify.app/docs/continuous-integration/github-actions/) if that link does not work yet), just use this [sample workflow file](#use-the-action) rather than they one they provide
 
 ## Usage
 
@@ -48,41 +50,58 @@ asciidoctor:
 Note that we also renamed `index.html` to `index.adoc` and modified this file accordingly in order to leverage AsciiDoc.
 
 ### Use the action
-Use the `limjh16/jekyll-action-ts@v1` and `ruby/setup-ruby@v1` action in your workflow file. It needs access to a `JEKYLL_PAT` secret set with a Personal Access Token. The directory where the Jekyll site lives will be detected (based on the location of `_config.yml`) but you can also explicitly set this directory by setting the `jekyll_src` parameter (`sample_site` for us). The `SRC` environment variable is also supported for backward compatibilty but it is deprecated.
+Put the `workflow.yml` file below into `.github/workflows`. It can be copied from [here](https://github.com/limjh16/jekyll-action-ts/blob/master/.github/workflows/workflow.yml) as well.
 
-Use the `actions/cache` action in the workflow as well, to shorten build times and decrease load on GitHub's servers
-
+`.github/workflows/workflow.yml`:
 ```yaml
-name: Testing the GitHub Pages publication
+name: Build and deploy jekyll site
 
 on:
   push
     
 jobs:
   jekyll:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-16.04 # can change this to ubuntu-latest if you prefer
     steps:
     - uses: actions/checkout@v2
-
-    # Use GitHub Actions' cache to shorten build times and decrease load on servers
-    - uses: actions/cache@v1
+    - id: find
+      name: Find jekyll directory # this step is needed to provide the cache directory and cache hash key
+      run: |
+        JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
+        JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
+        echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
+        echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
+    - name: Cache bundle files
+      uses: actions/cache@v1
       with:
         path: vendor/bundle
-        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+        key: ts-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
         restore-keys: |
-          ${{ runner.os }}-gems-
-
-    - uses: ruby/setup-ruby@v1
+          ts-${{ runner.os }}-gems-
+    - name: Cache jekyll files
+      uses: actions/cache@v1
       with:
-        ruby-version: 2.7
-
-    - uses:  limjh16/jekyll-action-ts@v1
-      env:
-        JEKYLL_PAT: ${{ secrets.JEKYLL_PAT }}
-	# Only add below to specify the Jekyll source location as a parameter
-	# By default, the directory will be detected automatically so this is not needed
+        path: ${{steps.find.outputs.jekyllSrc}}/.jekyll-cache
+        key: ts-${{ runner.os }}-jekyll-${{steps.find.outputs.jekyllHash}}
+        restore-keys: |
+          ts-${{ runner.os }}-jekyll-
+    - name: Set up Ruby 2.6
+      uses: ruby/setup-ruby@v1
       with:
-        jekyll_src: 'sample_site'
+        ruby-version: 2.6 # can change this to 2.7 or whatever version you prefer
+    - name: Build jekyll site
+      uses: limjh16/jekyll-action-ts@v2
+      with:
+        jekyll_src: ${{steps.find.outputs.jekyllSrc}}
+    - name: Deploy
+      if: github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./_site
+        # if the repo you are deploying to is <username>.github.io, uncomment the line below.
+        # if you are including the line below, make sure your source files are NOT in the master branch
+        #publish_branch: master
 ```
 
 Upon successful execution, the GitHub Pages publishing will happen automatically and will be listed on the *_environment_* tab of your repository. 
@@ -92,6 +111,3 @@ Upon successful execution, the GitHub Pages publishing will happen automatically
 Just click on the *_View deployment_* button of the `github-pages` environment to navigate to your GitHub Pages site.
 
 ![image](https://user-images.githubusercontent.com/2787414/51083411-188d1b00-171a-11e9-9a25-f8b06f33053e.png)
-
-### Known Limitation
-Publishing of the GitHub pages can fail when using the `GITHUB_TOKEN` secret as the value of the `JEKYLL_PAT` env variable, as opposed to a Personnal Access Token set as a secret. But it might work too :smile: 
