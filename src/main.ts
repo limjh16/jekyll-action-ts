@@ -57,7 +57,9 @@ async function run(): Promise<void> {
           }
         }
         core.debug(`Resolved ${jekyllSrc} as source directory`)
-        return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`)
+        return await exec.exec(
+          `bash -c "JEKYLL_ENV=production bundle exec jekyll build -s ${jekyllSrc}"`
+        )
       }
     })
   } catch (error) {
