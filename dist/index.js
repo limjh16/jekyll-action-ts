@@ -1024,7 +1024,7 @@ function run() {
                         }
                     }
                     core.debug(`Resolved ${jekyllSrc} as source directory`);
-                    return yield exec.exec(`JEKYLL_ENV=production bundle exec jekyll build -s ${jekyllSrc}`);
+                    return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
                 })
             });
         }
