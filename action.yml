@@ -1,5 +1,5 @@
-name: 'Jekyll Actions'
-description: 'A GitHub Action to build and publish Jekyll sites to GitHub Pages'
+name: 'Jekyll Actions Typescript/JS'
+description: 'A GitHub Action to build and publish Jekyll sites to GitHub Pages without Docker'
 inputs:
   jekyll_src:  
     description: 'The Jekyll website source directory'
