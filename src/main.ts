@@ -58,7 +58,7 @@ async function run(): Promise<void> {
         }
         core.debug(`Resolved ${jekyllSrc} as source directory`)
         core.exportVariable('JEKYLL_ENV', 'production')
-        await exec.exec('echo "${JEKYLL_ENV}"') // debug
+        await exec.exec('echo "$JEKYLL_ENV"') // debug
         return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`)
       }
     })

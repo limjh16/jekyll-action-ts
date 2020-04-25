@@ -1025,7 +1025,7 @@ function run() {
                     }
                     core.debug(`Resolved ${jekyllSrc} as source directory`);
                     core.exportVariable('JEKYLL_ENV', 'production');
-                    yield exec.exec('echo "${JEKYLL_ENV}"'); // debug
+                    yield exec.exec('echo "$JEKYLL_ENV"'); // debug
                     return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
                 })
             });
