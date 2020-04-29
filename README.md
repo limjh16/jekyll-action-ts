@@ -13,7 +13,7 @@ It is also able to cache the .jekyll-cache folder which may help with very large
 ## Official jekyll tutorial
 V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide. 
 
-If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/continuous-integration/github-actions/) (or [here](https://deploy-preview-8119--jekyllrb.netlify.app/docs/continuous-integration/github-actions/) if that link does not work yet), just use this [sample workflow file](#use-the-action) rather than they one they provide
+If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/continuous-integration/github-actions/), just use this [sample workflow file](#use-the-action) rather than they one they provide
 
 ## Usage
 
