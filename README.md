@@ -6,7 +6,9 @@ Out-of-the-box Jekyll with GitHub Pages allows you to leverage a limited, white-
 ## About this version
 Originated from https://github.com/helaili/jekyll-action, however this has been converted from a Docker action to a typescript/js action to cut down on the Docker initialisation time, as well as to use https://github.com/ruby/setup-ruby to automatically select bundler version. 
 
-V2 of this action removes the `git push` step from this action, and instead uses https://github.com/peaceiris/actions-gh-pages for more flexibility (you can choose the committer, the repository, etc.). It is also able to cache the .jekyll-cache folder which may help with very large websites. 
+V2 of this action removes the `git push` step from this action (basically only building the site and updating bundle dependencies), and instead uses https://github.com/peaceiris/actions-gh-pages for more flexibility (you can choose the committer, the repository, etc.). You can also choose to deploy to AWS, Google Cloud, Azure, or wherever else you wish to by removing the gh-pages action. (However I don't have any experience doing that, so you have to experiment at your own risk)
+
+It is also able to cache the .jekyll-cache folder which may help with very large websites. 
 
 ## Official jekyll tutorial
 V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide. 
