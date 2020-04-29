@@ -52,7 +52,7 @@ Note that we also renamed `index.html` to `index.adoc` and modified this file ac
 ### Use the action
 Put the `workflow.yml` file below into `.github/workflows`. It can be copied from [here](https://github.com/limjh16/jekyll-action-ts/blob/master/.github/workflows/workflow.yml) as well.
 
-`.github/workflows/workflow.yml`:
+[`.github/workflows/workflow.yml`](https://github.com/limjh16/jekyll-action-ts/blob/master/.github/workflows/workflow.yml):
 ```yaml
 name: Build and deploy jekyll site
 
