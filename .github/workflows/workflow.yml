@@ -1,48 +1,64 @@
 name: Build and deploy jekyll site
 
 on:
-  push
+  push:
+    branches:
+      - master
+      # - source
+      # It is highly recommended that you only run this action on push to a 
+        # specific branch, eg. master or source (if on *.github.io repo)
     
 jobs:
   jekyll:
     runs-on: ubuntu-16.04 # can change this to ubuntu-latest if you prefer
     steps:
-    - uses: actions/checkout@v2
-    - id: find
-      name: Find jekyll directory # this step is needed to provide the cache directory and cache hash key
-      run: |
-        JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
-        JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
-        echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
-        echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
-    - name: Cache bundle files
-      uses: actions/cache@v1
-      with:
-        path: vendor/bundle
-        key: ts-${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-        restore-keys: |
-          ts-${{ runner.os }}-gems-
-    - name: Cache jekyll files
-      uses: actions/cache@v1
-      with:
-        path: ${{steps.find.outputs.jekyllSrc}}/.jekyll-cache
-        key: ts-${{ runner.os }}-jekyll-${{steps.find.outputs.jekyllHash}}
-        restore-keys: |
-          ts-${{ runner.os }}-jekyll-
-    - name: Set up Ruby 2.6
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.6 # can change this to 2.7 or whatever version you prefer
-    - name: Build jekyll site
-      uses: limjh16/jekyll-action-ts@v2
-      with:
-        jekyll_src: ${{steps.find.outputs.jekyllSrc}}
-    - name: Deploy
-      if: github.event_name == 'push'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./_site
-        # if the repo you are deploying to is <username>.github.io, uncomment the line below.
-        # if you are including the line below, make sure your source files are NOT in the master branch
-        #publish_branch: master
+      - name: 📂 setup
+        uses: actions/checkout@v2
+        # include the lines below if you are using jekyll-last-modified-at
+        # or if you would otherwise need to fetch the full commit history
+        # however this may be very slow for large repositories!
+        # with:
+          # fetch-depth: '0'
+
+      - id: find # this step is needed to provide the cache directory and cache hash key
+        name: 📂 find jekyll directory
+        run: |
+          JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
+          JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
+          echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
+          echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
+
+      - name: 📝 cache bundler files
+        uses: actions/cache@v1
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+
+      - name: 📝 cache jekyll files
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.find.outputs.jekyllSrc }}/.jekyll-cache
+          key: ${{ runner.os }}-jekyll-${{ steps.find.outputs.jekyllHash }}
+          restore-keys: |
+            ${{ runner.os }}-jekyll-
+
+      - name: 💎 setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6 # can change this to 2.7 or whatever version you prefer
+
+      - name: 🔨 install dependencies & build site
+        uses: limjh16/jekyll-action-ts@v2
+        with:
+          jekyll_src: ${{ steps.find.outputs.jekyllSrc }}
+
+      - name: 🚀 deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          # if the repo you are deploying to is <username>.github.io, uncomment the line below.
+          # if you are including the line below, make sure your source files are NOT in the master branch:
+          # publish_branch: master
