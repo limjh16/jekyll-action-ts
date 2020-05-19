@@ -1,27 +1,33 @@
 # jekyll-action-ts
+
 A GitHub Action to build and publish Jekyll sites to GitHub Pages
 
 Out-of-the-box Jekyll with GitHub Pages allows you to leverage a limited, white-listed, set of gems. Complex sites requiring custom ones or non white-listed ones (AsciiDoc for intstance) used to require a continuous integration build in order to pre-process the site.
 
 ## About this version
-Originated from https://github.com/helaili/jekyll-action, however this has been converted from a Docker action to a typescript/js action to cut down on the Docker initialisation time, as well as to use https://github.com/ruby/setup-ruby to automatically select bundler version. 
 
-V2 of this action removes the `git push` step from this action (basically only building the site and updating bundle dependencies), and instead uses https://github.com/peaceiris/actions-gh-pages for more flexibility (you can choose the committer, the repository, etc.). You can also choose to deploy to AWS, Google Cloud, Azure, or wherever else you wish to by removing the gh-pages action. (However I don't have any experience doing that, so you have to experiment at your own risk)
+Originated from [helaili/jekyll-action](https://github.com/helaili/jekyll-action), however this has been converted from a Docker action to a typescript/js action to cut down on the Docker initialisation time, as well as to use [ruby/setup-ruby](https://github.com/ruby/setup-ruby) to automatically select bundler version.
+
+V2 of this action removes the `git push` step from this action (basically only building the site and updating bundle dependencies), and instead uses [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) for more flexibility (you can choose the committer, the repository, etc.). You can also choose to deploy to AWS, Google Cloud, Azure, or wherever else you wish to by removing the gh-pages action. (However I don't have any experience doing that, so you have to experiment at your own risk)
 
 ## Official jekyll tutorial
-V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide. 
+
+V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide.
 
 If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/continuous-integration/github-actions/), just use this [sample workflow file](#use-the-action) rather than they one they provide
 
 ## Usage
 
 ### Create a Jekyll site
+
 If you repo doesn't already have one, create a new Jekyll site:  `jekyll new sample-site`. See [the Jekyll website](https://jekyllrb.com/) for more information. In this repo, we have created a site within a `sample_site` folder within the repository because the repository's main goal is not to be a website. If it was the case, we would have created the site at the root of the repository.
 
 ### Create a `Gemfile`
+
 As you are using this action to leverage specific Gems, well, you need to declare them! In the sample below we are using [the Jekyll AsciiDoc plugin](https://github.com/asciidoctor/jekyll-asciidoc)
 
 ```Ruby
+
 source 'https://rubygems.org'
 
 gem 'jekyll', '~> 3.8.5'
@@ -34,6 +40,7 @@ end
 ```
 
 ### Configure your Jekyll site
+
 Edit the configuration file of your Jekyll site (`_config.yml`) to leverage these plugins. In our sample, we want to leverage AsciiDoc so we added the following section:
 
 ```yaml
@@ -50,10 +57,13 @@ asciidoctor:
 Note that we also renamed `index.html` to `index.adoc` and modified this file accordingly in order to leverage AsciiDoc.
 
 ### Use the action
+
 Put the `workflow.yml` file below into `.github/workflows`. It can be copied from [here](https://github.com/limjh16/jekyll-action-ts/blob/master/.github/workflows/workflow.yml) as well. Do take some time to read through the comments to understand the different settings.
 
 [`.github/workflows/workflow.yml`](https://github.com/limjh16/jekyll-action-ts/blob/master/.github/workflows/workflow.yml):
+
 ```yaml
+
 name: Build and deploy jekyll site
 
 on:
@@ -61,7 +71,7 @@ on:
     branches:
       - master
       # - source
-      # It is highly recommended that you only run this action on push to a 
+      # It is highly recommended that you only run this action on push to a
         # specific branch, eg. master or source (if on *.github.io repo)
 
 jobs:
@@ -103,7 +113,7 @@ jobs:
 
 ```
 
-Upon successful execution, the GitHub Pages publishing will happen automatically and will be listed on the *_environment_* tab of your repository. 
+Upon successful execution, the GitHub Pages publishing will happen automatically and will be listed on the *_environment_* tab of your repository.
 
 ![image](https://user-images.githubusercontent.com/2787414/51083469-31e29700-171b-11e9-8f10-8c02dd485f83.png)
 
