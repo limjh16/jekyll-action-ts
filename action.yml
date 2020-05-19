@@ -9,7 +9,7 @@ inputs:
     required: false
 runs:
   using: 'node12'
-  # pre: 'dist.pre.js' https://github.com/actions/toolkit/tree/master/packages/core#action-state
+  pre: 'dist_pre/index.js'
   main: 'dist/index.js'
 branding:
   icon: 'book'
