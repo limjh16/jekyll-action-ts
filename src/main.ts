@@ -1,41 +1,22 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
+import * as glob from '@actions/glob'
 import {measure} from './common'
-import {ExecOptions} from '@actions/exec/lib/interfaces'
-/**
- * @todo Catch error outputs
- * @body Seems like GitHub Actions has some powerful tools to help catch unexpected errors
- * https://github.com/actions/toolkit/tree/master/packages/exec#outputoptions
- * https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
- */
+
 async function run(): Promise<void> {
   try {
-    let jekyllSrc = ''
-    let myError = ''
-    const options: ExecOptions = {}
-    options.listeners = {
-      stdout: (data: Buffer) => {
-        jekyllSrc += data.toString()
-      },
-      stderr: (data: Buffer) => {
-        myError += data.toString()
-      }
-    }
-
+    let jekyllSrc = '',
+      gemSrc = '',
+      gemArr: string[],
+      jekyllArr: string[]
     const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
-      SRC = core.getInput('SRC', {})
+      SRC = core.getInput('SRC', {}),
+      INPUT_GEM_SRC = core.getInput('GEM_SRC', {})
+
     await measure({
-      name: 'bundle install',
+      name: 'resolve directories',
       block: async () => {
-        await exec.exec('bundle config path vendor/bundle')
-        return await exec.exec('bundle install --jobs 4 --retry 3')
-      }
-    })
-    await measure({
-      name: 'jekyll build',
-      block: async () => {
-        core.debug(INPUT_JEKYLL_SRC)
-        core.debug(SRC)
+        // Resolve Jekyll directory
         if (INPUT_JEKYLL_SRC) {
           jekyllSrc = INPUT_JEKYLL_SRC
           core.debug(`Using parameter value ${jekyllSrc} as a source directory`)
@@ -45,18 +26,85 @@ async function run(): Promise<void> {
             `Using ${jekyllSrc} environment var value as a source directory`
           )
         } else {
-          try {
-            await exec.exec(
-              'bash -c "find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \\; | tr -d \'\n\'"',
-              [],
-              options
+          jekyllArr = await (
+            await glob.create(
+              ['**/_config.yml', '!**/vendor/bundle/**'].join('\n')
             )
-          } catch (error) {
-            core.debug(`error: ${error}`)
-            core.debug(`myError: ${myError}`)
+          ).glob()
+          for (let i = 0; i < jekyllArr.length; i++) {
+            jekyllArr[i] = jekyllArr[i].replace(/_config\.yml/, '')
+          }
+          if (jekyllArr.length > 1) {
+            throw new Error(
+              `error: found ${jekyllArr.length} _config.yml! Please define which to use with input variable "JEKYLL_SRC"`
+            )
+          } else {
+            jekyllSrc = jekyllArr[0]
           }
         }
         core.debug(`Resolved ${jekyllSrc} as source directory`)
+
+        // Resolve Gemfile directory
+        if (INPUT_GEM_SRC) {
+          gemSrc = INPUT_GEM_SRC
+          if (!gemSrc.endsWith('Gemfile')) {
+            if (!gemSrc.endsWith('/')) {
+              gemSrc = gemSrc.concat('/')
+            }
+            gemSrc = gemSrc.concat('Gemfile')
+          }
+        } else {
+          gemArr = await (
+            await glob.create(['**/Gemfile', '!**/vendor/bundle/**'].join('\n'))
+          ).glob()
+          if (gemArr.length > 1) {
+            if (!jekyllSrc.endsWith('/')) {
+              jekyllSrc = jekyllSrc.concat('/')
+            }
+            if (jekyllSrc.startsWith('.')) {
+              jekyllSrc = jekyllSrc.replace(
+                /\.\/|\./,
+                `${process.env.GITHUB_WORKSPACE}/`
+              )
+            } else if (!jekyllSrc.startsWith('/')) {
+              jekyllSrc = `${process.env.GITHUB_WORKSPACE}/`.concat(jekyllSrc)
+            }
+            for (const element of gemArr) {
+              if (element.replace(/Gemfile/, '') === jekyllSrc) {
+                gemSrc = element
+              }
+            }
+            if (!gemSrc) {
+              throw new Error(
+                `found ${gemArr.length} Gemfiles, and failed to resolve them! Please define which to use with input variable "GEM_SRC"`
+              )
+            } else {
+              core.warning(`found ${gemArr.length} Gemfiles!`)
+            }
+          } else {
+            gemSrc = gemArr[0]
+          }
+        }
+        core.debug(`Resolved ${gemSrc} as Gemfile`)
+        core.exportVariable('BUNDLE_GEMFILE', `${gemSrc}`)
+      }
+    })
+
+    await measure({
+      name: 'bundle install',
+      block: async () => {
+        await exec.exec(
+          `bundle config path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`
+        )
+        return await exec.exec(
+          `bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`
+        )
+      }
+    })
+
+    await measure({
+      name: 'jekyll build',
+      block: async () => {
         core.exportVariable('JEKYLL_ENV', 'production')
         return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`)
       }

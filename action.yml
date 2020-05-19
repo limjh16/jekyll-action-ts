@@ -4,8 +4,12 @@ inputs:
   jekyll_src:  
     description: 'The Jekyll website source directory'
     required: false
+  gem_src:  
+    description: 'The Jekyll Gemfile directory'
+    required: false
 runs:
   using: 'node12'
+  # pre: 'dist.pre.js' https://github.com/actions/toolkit/tree/master/packages/core#action-state
   main: 'dist/index.js'
 branding:
   icon: 'book'

@@ -10,6 +10,8 @@ Originated from [helaili/jekyll-action](https://github.com/helaili/jekyll-action
 
 V2 of this action removes the `git push` step from this action (basically only building the site and updating bundle dependencies), and instead uses [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) for more flexibility (you can choose the committer, the repository, etc.). You can also choose to deploy to AWS, Google Cloud, Azure, or wherever else you wish to by removing the gh-pages action. (However I don't have any experience doing that, so you have to experiment at your own risk)
 
+This can also automatically find a `Gemfile` if it isn't in the root directory, and in the case of multiple Gemfiles find the one in the same directory as `_config.yml`. This can be helpful in cases where you have a `docs` folder containing a website inside a ruby project which has a Gemfile by itself.
+
 ## Official jekyll tutorial
 
 V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide.
@@ -92,7 +94,7 @@ jobs:
           path: vendor/bundle
           key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
           restore-keys: |
-            ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+            ${{ runner.os }}-gems-
 
       - name: 💎 setup ruby
         uses: ruby/setup-ruby@v1
@@ -101,6 +103,8 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: limjh16/jekyll-action-ts@v2
+        # with:
+          # gem_src: sample_site # If there are multiple Gemfiles, specify one
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3

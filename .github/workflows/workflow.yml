@@ -26,7 +26,7 @@ jobs:
           path: vendor/bundle
           key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
           restore-keys: |
-            ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+            ${{ runner.os }}-gems-
 
       - name: 💎 setup ruby
         uses: ruby/setup-ruby@v1
@@ -35,6 +35,8 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: limjh16/jekyll-action-ts@v2
+        # with:
+          # gem_src: sample_site # If there are multiple Gemfiles, specify one
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3
