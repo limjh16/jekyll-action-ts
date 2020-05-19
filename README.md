@@ -8,8 +8,6 @@ Originated from https://github.com/helaili/jekyll-action, however this has been 
 
 V2 of this action removes the `git push` step from this action (basically only building the site and updating bundle dependencies), and instead uses https://github.com/peaceiris/actions-gh-pages for more flexibility (you can choose the committer, the repository, etc.). You can also choose to deploy to AWS, Google Cloud, Azure, or wherever else you wish to by removing the gh-pages action. (However I don't have any experience doing that, so you have to experiment at your own risk)
 
-It is also able to cache the .jekyll-cache folder which may help with very large websites. 
-
 ## Official jekyll tutorial
 V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide. 
 
@@ -65,7 +63,7 @@ on:
       # - source
       # It is highly recommended that you only run this action on push to a 
         # specific branch, eg. master or source (if on *.github.io repo)
-    
+
 jobs:
   jekyll:
     runs-on: ubuntu-16.04 # can change this to ubuntu-latest if you prefer
@@ -78,14 +76,6 @@ jobs:
         # with:
           # fetch-depth: '0'
 
-      - id: find # this step is needed to provide the cache directory and cache hash key
-        name: 📂 find jekyll directory
-        run: |
-          JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
-          JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
-          echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
-          echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
-
       - name: 📝 cache bundler files
         uses: actions/cache@v1
         with:
@@ -94,14 +84,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
 
-      - name: 📝 cache jekyll files
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.find.outputs.jekyllSrc }}/.jekyll-cache
-          key: ${{ runner.os }}-jekyll-${{ steps.find.outputs.jekyllHash }}
-          restore-keys: |
-            ${{ runner.os }}-jekyll-
-
       - name: 💎 setup ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -109,8 +91,6 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: limjh16/jekyll-action-ts@v2
-        with:
-          jekyll_src: ${{ steps.find.outputs.jekyllSrc }}
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3

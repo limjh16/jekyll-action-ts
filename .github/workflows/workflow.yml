@@ -20,14 +20,6 @@ jobs:
         # with:
           # fetch-depth: '0'
 
-      - id: find # this step is needed to provide the cache directory and cache hash key
-        name: 📂 find jekyll directory
-        run: |
-          JEKYLL_SRC=$(find . -path ./vendor/bundle -prune -o -name _config.yml -exec dirname {} \; | tr -d '\n')
-          JEKYLL_HASH=$(ls -alR --full-time ${JEKYLL_SRC} | sha1sum)
-          echo "::set-output name=jekyllSrc::${JEKYLL_SRC}"
-          echo "::set-output name=jekyllHash::${JEKYLL_HASH}"
-
       - name: 📝 cache bundler files
         uses: actions/cache@v1
         with:
@@ -36,14 +28,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
 
-      - name: 📝 cache jekyll files
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.find.outputs.jekyllSrc }}/.jekyll-cache
-          key: ${{ runner.os }}-jekyll-${{ steps.find.outputs.jekyllHash }}
-          restore-keys: |
-            ${{ runner.os }}-jekyll-
-
       - name: 💎 setup ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -51,8 +35,6 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: limjh16/jekyll-action-ts@v2
-        with:
-          jekyll_src: ${{ steps.find.outputs.jekyllSrc }}
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3
