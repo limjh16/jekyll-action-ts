@@ -9,7 +9,6 @@ inputs:
     required: false
 runs:
   using: 'node12'
-  pre: 'dist_pre/index.js'
   main: 'dist/index.js'
 branding:
   icon: 'book'
