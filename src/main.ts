@@ -1,6 +1,9 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as glob from '@actions/glob'
+import * as cache from '@actions/cache'
+import * as crypto from 'crypto'
+import * as fs from 'fs'
 import {measure} from './common'
 
 async function run(): Promise<void> {
@@ -8,10 +11,14 @@ async function run(): Promise<void> {
     let jekyllSrc = '',
       gemSrc = '',
       gemArr: string[],
-      jekyllArr: string[]
+      jekyllArr: string[],
+      hash: string
     const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {}),
       INPUT_GEM_SRC = core.getInput('GEM_SRC', {})
+    const paths = ['vendor/bundle'],
+      key = `Linux-gems-`,
+      restoreKeys = ['Linux-gems-', 'bundle-use-ruby-Linux-gems-']
 
     await measure({
       name: 'resolve directories',
@@ -91,6 +98,20 @@ async function run(): Promise<void> {
     })
 
     await measure({
+      name: 'restore bundler cache',
+      block: async () => {
+        const input = fs.createReadStream(`${gemSrc}.lock`)
+        input.on('readable', () => {
+          const data = input.read()
+          if (data)
+            hash = crypto.createHash('sha256').update(data).digest('hex')
+          else core.warning('hash generation failed, unexpected error!')
+        })
+        return await cache.restoreCache(paths, `${key}${hash}`, restoreKeys)
+      }
+    })
+
+    await measure({
       name: 'bundle install',
       block: async () => {
         await exec.exec(
@@ -107,6 +128,13 @@ async function run(): Promise<void> {
       block: async () => {
         core.exportVariable('JEKYLL_ENV', 'production')
         return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`)
+      }
+    })
+
+    await measure({
+      name: 'save bundler cache',
+      block: async () => {
+        return await cache.saveCache(paths, `key${hash}`)
       }
     })
   } catch (error) {
