@@ -2887,14 +2887,11 @@ function run() {
             yield common_1.measure({
                 name: 'restore bundler cache',
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    const input = fs.createReadStream(`${gemSrc}.lock`);
-                    input.on('readable', () => {
-                        const data = input.read();
-                        if (data)
-                            hash = crypto.createHash('sha256').update(data).digest('hex');
-                        else
-                            core.warning('hash generation failed, unexpected error!');
-                    });
+                    hash = crypto
+                        .createHash('sha256')
+                        .update(fs.readFileSync(`${gemSrc}.lock`))
+                        .digest('hex');
+                    core.debug(`Hash of Gemfile.lock: ${hash}`);
                     return yield cache.restoreCache(paths, `${key}${hash}`, restoreKeys);
                 })
             });

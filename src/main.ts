@@ -100,13 +100,11 @@ async function run(): Promise<void> {
     await measure({
       name: 'restore bundler cache',
       block: async () => {
-        const input = fs.createReadStream(`${gemSrc}.lock`)
-        input.on('readable', () => {
-          const data = input.read()
-          if (data)
-            hash = crypto.createHash('sha256').update(data).digest('hex')
-          else core.warning('hash generation failed, unexpected error!')
-        })
+        hash = crypto
+          .createHash('sha256')
+          .update(fs.readFileSync(`${gemSrc}.lock`))
+          .digest('hex')
+        core.debug(`Hash of Gemfile.lock: ${hash}`)
         return await cache.restoreCache(paths, `${key}${hash}`, restoreKeys)
       }
     })
