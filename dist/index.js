@@ -2814,7 +2814,7 @@ const common_1 = __webpack_require__(865);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, cacheHit;
+            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false;
             const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}), SRC = core.getInput('SRC', {}), INPUT_GEM_SRC = core.getInput('GEM_SRC', {});
             const paths = ['vendor/bundle'], key = `Linux-gems-`, restoreKeys = [key, 'bundle-use-ruby-Linux-gems-'];
             yield common_1.measure({
@@ -2901,7 +2901,7 @@ function run() {
                             ].join(', ')}`);
                             return;
                         }
-                        cacheHit = common_1.isExactKeyMatch(`${key}${hash}`, cacheKey);
+                        exactKeyMatch = common_1.isExactKeyMatch(`${key}${hash}`, cacheKey);
                     }
                     catch (error) {
                         if (error.name === cache.ValidationError.name) {
@@ -2909,7 +2909,7 @@ function run() {
                         }
                         else {
                             core.warning(error.message);
-                            cacheHit = false;
+                            exactKeyMatch = false;
                         }
                     }
                     return;
@@ -2918,41 +2918,51 @@ function run() {
             yield common_1.measure({
                 name: 'bundle install',
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    yield exec.exec(`bundle config path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`);
-                    return yield exec.exec(`bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`);
-                })
-            });
-            yield common_1.measure({
-                name: 'jekyll build',
-                block: () => __awaiter(this, void 0, void 0, function* () {
-                    core.exportVariable('JEKYLL_ENV', 'production');
-                    return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
-                })
-            });
-            yield common_1.measure({
-                name: 'save bundler cache',
-                block: () => __awaiter(this, void 0, void 0, function* () {
-                    if (cacheHit) {
-                        core.info(`Cache hit occurred on the primary key ${key}${hash}, not saving cache.`);
-                        return;
-                    }
+                    yield exec.exec(`bundle config deployment true path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`);
                     try {
-                        yield cache.saveCache(paths, `${key}${hash}`);
+                        yield exec.exec(`bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`);
                     }
                     catch (error) {
-                        if (error.name === cache.ValidationError.name) {
-                            throw error;
-                        }
-                        else if (error.name === cache.ReserveCacheError.name) {
-                            core.info(error.message);
-                        }
-                        else {
-                            core.warning(error.message);
-                        }
+                        installFailure = true;
+                        core.error('Gemfile.lock probably needs updating. Run "bundle install" locally and commit changes. Exiting action');
+                        throw error;
                     }
                     return;
                 })
             });
+            if (!installFailure) {
+                yield common_1.measure({
+                    name: 'jekyll build',
+                    block: () => __awaiter(this, void 0, void 0, function* () {
+                        core.exportVariable('JEKYLL_ENV', 'production');
+                        return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
+                    })
+                });
+                yield common_1.measure({
+                    name: 'save bundler cache',
+                    block: () => __awaiter(this, void 0, void 0, function* () {
+                        if (exactKeyMatch) {
+                            core.info(`Cache hit occurred on the primary key ${key}${hash}, not saving cache.`);
+                            return;
+                        }
+                        try {
+                            yield cache.saveCache(paths, `${key}${hash}`);
+                        }
+                        catch (error) {
+                            if (error.name === cache.ValidationError.name) {
+                                throw error;
+                            }
+                            else if (error.name === cache.ReserveCacheError.name) {
+                                core.info(error.message);
+                            }
+                            else {
+                                core.warning(error.message);
+                            }
+                        }
+                        return;
+                    })
+                });
+            }
         }
         catch (error) {
             core.setFailed(error.message);

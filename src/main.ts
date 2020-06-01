@@ -13,7 +13,8 @@ async function run(): Promise<void> {
       gemArr: string[],
       jekyllArr: string[],
       hash: string,
-      cacheHit: boolean
+      exactKeyMatch: boolean,
+      installFailure = false
     const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {}),
       INPUT_GEM_SRC = core.getInput('GEM_SRC', {})
@@ -121,13 +122,13 @@ async function run(): Promise<void> {
             )
             return
           }
-          cacheHit = isExactKeyMatch(`${key}${hash}`, cacheKey)
+          exactKeyMatch = isExactKeyMatch(`${key}${hash}`, cacheKey)
         } catch (error) {
           if (error.name === cache.ValidationError.name) {
             throw error
           } else {
             core.warning(error.message)
-            cacheHit = false
+            exactKeyMatch = false
           }
         }
         return
@@ -138,45 +139,56 @@ async function run(): Promise<void> {
       name: 'bundle install',
       block: async () => {
         await exec.exec(
-          `bundle config path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`
+          `bundle config deployment true path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`
         )
-        return await exec.exec(
-          `bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`
-        )
-      }
-    })
-
-    await measure({
-      name: 'jekyll build',
-      block: async () => {
-        core.exportVariable('JEKYLL_ENV', 'production')
-        return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`)
-      }
-    })
-
-    await measure({
-      name: 'save bundler cache',
-      block: async () => {
-        if (cacheHit) {
-          core.info(
-            `Cache hit occurred on the primary key ${key}${hash}, not saving cache.`
-          )
-          return
-        }
         try {
-          await cache.saveCache(paths, `${key}${hash}`)
+          await exec.exec(
+            `bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`
+          )
         } catch (error) {
-          if (error.name === cache.ValidationError.name) {
-            throw error
-          } else if (error.name === cache.ReserveCacheError.name) {
-            core.info(error.message)
-          } else {
-            core.warning(error.message)
-          }
+          installFailure = true
+          core.error(
+            'Gemfile.lock probably needs updating. Run "bundle install" locally and commit changes. Exiting action'
+          )
+          throw error
         }
         return
       }
     })
+
+    if (!installFailure) {
+      await measure({
+        name: 'jekyll build',
+        block: async () => {
+          core.exportVariable('JEKYLL_ENV', 'production')
+          return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`)
+        }
+      })
+
+      await measure({
+        name: 'save bundler cache',
+        block: async () => {
+          if (exactKeyMatch) {
+            core.info(
+              `Cache hit occurred on the primary key ${key}${hash}, not saving cache.`
+            )
+            return
+          }
+          try {
+            await cache.saveCache(paths, `${key}${hash}`)
+          } catch (error) {
+            if (error.name === cache.ValidationError.name) {
+              throw error
+            } else if (error.name === cache.ReserveCacheError.name) {
+              core.info(error.message)
+            } else {
+              core.warning(error.message)
+            }
+          }
+          return
+        }
+      })
+    }
   } catch (error) {
     core.setFailed(error.message)
   }
