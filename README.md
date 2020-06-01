@@ -99,7 +99,22 @@ jobs:
         uses: limjh16/jekyll-action-ts@v2
         with:
           enable_cache: true
-          # gem_src: sample_site # If there are multiple Gemfiles, specify one
+          # jekyll_src: sample_site
+          ### If the jekyll website source is not in root, specify the directory. (in this case, sample_site)
+          ### By default, this is not required as the action searches for a _config.yml automatically.
+          #
+          # gem_src: sample_site
+          ### By default, this is not required as the action searches for a _config.yml automatically.
+          ### However, if there are multiple Gemfiles, the action may not be able to determine which to use.
+          ### In that case, specify the directory. (in this case, sample_site)
+          ###
+          ### If jekyll_src is set, the action would automatically choose the Gemfile in jekyll_src.
+          ### In that case this input may not be needed as well.
+          #
+          # key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          # restore-keys: |
+          #   ${{ runner.os }}-gems-
+          ### In cases where you want to specify the cache key, enable the above 2 inputs
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3
