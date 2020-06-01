@@ -2814,9 +2814,16 @@ const common_1 = __webpack_require__(865);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false;
-            const INPUT_JEKYLL_SRC = core.getInput('jekyll_src', {}), SRC = core.getInput('src', {}), INPUT_GEM_SRC = core.getInput('gem_src', {}), INPUT_ENABLE_CACHE = core.getInput('enable_cache', {});
-            const paths = ['vendor/bundle'], key = `Linux-gems-`, restoreKeys = [key, 'bundle-use-ruby-Linux-gems-'];
+            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
+            const INPUT_JEKYLL_SRC = core.getInput('jekyll_src', {}), SRC = core.getInput('src', {}), INPUT_GEM_SRC = core.getInput('gem_src', {}), INPUT_ENABLE_CACHE = core.getInput('enable_cache', {}), INPUT_KEY = core.getInput('key', {}), INPUT_RESTORE_KEYS = core
+                .getInput('restore-keys', {})
+                .split('\n')
+                .filter(x => x !== '');
+            const paths = ['vendor/bundle'];
+            if (INPUT_RESTORE_KEYS)
+                restoreKeys = INPUT_RESTORE_KEYS;
+            else
+                restoreKeys = ['Linux-gems-', 'bundle-use-ruby-Linux-gems-'];
             yield common_1.measure({
                 name: 'resolve directories',
                 block: () => __awaiter(this, void 0, void 0, function* () {
@@ -2888,21 +2895,23 @@ function run() {
                 yield common_1.measure({
                     name: 'restore bundler cache',
                     block: () => __awaiter(this, void 0, void 0, function* () {
-                        hash = crypto
-                            .createHash('sha256')
-                            .update(fs.readFileSync(`${gemSrc}.lock`))
-                            .digest('hex');
-                        core.debug(`Hash of Gemfile.lock: ${hash}`);
+                        if (!INPUT_KEY) {
+                            hash = crypto
+                                .createHash('sha256')
+                                .update(fs.readFileSync(`${gemSrc}.lock`))
+                                .digest('hex');
+                            core.debug(`Hash of Gemfile.lock: ${hash}`);
+                            key = `Linux-gems-${hash}`;
+                        }
+                        else
+                            key = INPUT_KEY;
                         try {
-                            const cacheKey = yield cache.restoreCache(paths, `${key}${hash}`, restoreKeys);
+                            const cacheKey = yield cache.restoreCache(paths, key, restoreKeys);
                             if (!cacheKey) {
-                                core.info(`Cache not found for input keys: ${[
-                                    `${key}${hash}`,
-                                    ...restoreKeys
-                                ].join(', ')}`);
+                                core.info(`Cache not found for input keys: ${[key, ...restoreKeys].join(', ')}`);
                                 return;
                             }
-                            exactKeyMatch = common_1.isExactKeyMatch(`${key}${hash}`, cacheKey);
+                            exactKeyMatch = common_1.isExactKeyMatch(key, cacheKey);
                         }
                         catch (error) {
                             if (error.name === cache.ValidationError.name) {
@@ -2946,11 +2955,11 @@ function run() {
                         name: 'save bundler cache',
                         block: () => __awaiter(this, void 0, void 0, function* () {
                             if (exactKeyMatch) {
-                                core.info(`Cache hit occurred on the primary key ${key}${hash}, not saving cache.`);
+                                core.info(`Cache hit occurred on the primary key ${key}, not saving cache.`);
                                 return;
                             }
                             try {
-                                yield cache.saveCache(paths, `${key}${hash}`);
+                                yield cache.saveCache(paths, key);
                             }
                             catch (error) {
                                 if (error.name === cache.ValidationError.name) {

@@ -10,6 +10,12 @@ inputs:
   enable_cache:  
     description: 'Enable caching within the action'
     required: false
+  key:
+    description: 'An explicit key for restoring and saving the cache'
+    required: false
+  restore-keys:
+    description: 'An ordered list of keys to use for restoring the cache if no cache hit occurred for key'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

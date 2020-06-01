@@ -14,14 +14,21 @@ async function run(): Promise<void> {
       jekyllArr: string[],
       hash: string,
       exactKeyMatch: boolean,
-      installFailure = false
+      installFailure = false,
+      restoreKeys: string[],
+      key: string
     const INPUT_JEKYLL_SRC = core.getInput('jekyll_src', {}),
       SRC = core.getInput('src', {}),
       INPUT_GEM_SRC = core.getInput('gem_src', {}),
-      INPUT_ENABLE_CACHE = core.getInput('enable_cache', {})
-    const paths = ['vendor/bundle'],
-      key = `Linux-gems-`,
-      restoreKeys = [key, 'bundle-use-ruby-Linux-gems-']
+      INPUT_ENABLE_CACHE = core.getInput('enable_cache', {}),
+      INPUT_KEY = core.getInput('key', {}),
+      INPUT_RESTORE_KEYS = core
+        .getInput('restore-keys', {})
+        .split('\n')
+        .filter(x => x !== '')
+    const paths = ['vendor/bundle']
+    if (INPUT_RESTORE_KEYS) restoreKeys = INPUT_RESTORE_KEYS
+    else restoreKeys = ['Linux-gems-', 'bundle-use-ruby-Linux-gems-']
 
     await measure({
       name: 'resolve directories',
@@ -104,27 +111,25 @@ async function run(): Promise<void> {
       await measure({
         name: 'restore bundler cache',
         block: async () => {
-          hash = crypto
-            .createHash('sha256')
-            .update(fs.readFileSync(`${gemSrc}.lock`))
-            .digest('hex')
-          core.debug(`Hash of Gemfile.lock: ${hash}`)
+          if (!INPUT_KEY) {
+            hash = crypto
+              .createHash('sha256')
+              .update(fs.readFileSync(`${gemSrc}.lock`))
+              .digest('hex')
+            core.debug(`Hash of Gemfile.lock: ${hash}`)
+            key = `Linux-gems-${hash}`
+          } else key = INPUT_KEY
           try {
-            const cacheKey = await cache.restoreCache(
-              paths,
-              `${key}${hash}`,
-              restoreKeys
-            )
+            const cacheKey = await cache.restoreCache(paths, key, restoreKeys)
             if (!cacheKey) {
               core.info(
-                `Cache not found for input keys: ${[
-                  `${key}${hash}`,
-                  ...restoreKeys
-                ].join(', ')}`
+                `Cache not found for input keys: ${[key, ...restoreKeys].join(
+                  ', '
+                )}`
               )
               return
             }
-            exactKeyMatch = isExactKeyMatch(`${key}${hash}`, cacheKey)
+            exactKeyMatch = isExactKeyMatch(key, cacheKey)
           } catch (error) {
             if (error.name === cache.ValidationError.name) {
               throw error
@@ -175,12 +180,12 @@ async function run(): Promise<void> {
           block: async () => {
             if (exactKeyMatch) {
               core.info(
-                `Cache hit occurred on the primary key ${key}${hash}, not saving cache.`
+                `Cache hit occurred on the primary key ${key}, not saving cache.`
               )
               return
             }
             try {
-              await cache.saveCache(paths, `${key}${hash}`)
+              await cache.saveCache(paths, key)
             } catch (error) {
               if (error.name === cache.ValidationError.name) {
                 throw error
