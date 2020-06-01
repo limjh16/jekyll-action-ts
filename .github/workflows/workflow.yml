@@ -27,7 +27,8 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: ./
-        # with:
+        with:
+          enable_cache: true
           # gem_src: sample_site # If there are multiple Gemfiles, specify one
 
       - name: 🚀 deploy

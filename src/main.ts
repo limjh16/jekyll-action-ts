@@ -17,7 +17,8 @@ async function run(): Promise<void> {
       installFailure = false
     const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {}),
-      INPUT_GEM_SRC = core.getInput('GEM_SRC', {})
+      INPUT_GEM_SRC = core.getInput('GEM_SRC', {}),
+      INPUT_ENABLE_CACHE = core.getInput('ENABLE_CACHE', {})
     const paths = ['vendor/bundle'],
       key = `Linux-gems-`,
       restoreKeys = [key, 'bundle-use-ruby-Linux-gems-']
@@ -99,41 +100,43 @@ async function run(): Promise<void> {
       }
     })
 
-    await measure({
-      name: 'restore bundler cache',
-      block: async () => {
-        hash = crypto
-          .createHash('sha256')
-          .update(fs.readFileSync(`${gemSrc}.lock`))
-          .digest('hex')
-        core.debug(`Hash of Gemfile.lock: ${hash}`)
-        try {
-          const cacheKey = await cache.restoreCache(
-            paths,
-            `${key}${hash}`,
-            restoreKeys
-          )
-          if (!cacheKey) {
-            core.info(
-              `Cache not found for input keys: ${[
-                `${key}${hash}`,
-                ...restoreKeys
-              ].join(', ')}`
+    if (INPUT_ENABLE_CACHE) {
+      await measure({
+        name: 'restore bundler cache',
+        block: async () => {
+          hash = crypto
+            .createHash('sha256')
+            .update(fs.readFileSync(`${gemSrc}.lock`))
+            .digest('hex')
+          core.debug(`Hash of Gemfile.lock: ${hash}`)
+          try {
+            const cacheKey = await cache.restoreCache(
+              paths,
+              `${key}${hash}`,
+              restoreKeys
             )
-            return
+            if (!cacheKey) {
+              core.info(
+                `Cache not found for input keys: ${[
+                  `${key}${hash}`,
+                  ...restoreKeys
+                ].join(', ')}`
+              )
+              return
+            }
+            exactKeyMatch = isExactKeyMatch(`${key}${hash}`, cacheKey)
+          } catch (error) {
+            if (error.name === cache.ValidationError.name) {
+              throw error
+            } else {
+              core.warning(error.message)
+              exactKeyMatch = false
+            }
           }
-          exactKeyMatch = isExactKeyMatch(`${key}${hash}`, cacheKey)
-        } catch (error) {
-          if (error.name === cache.ValidationError.name) {
-            throw error
-          } else {
-            core.warning(error.message)
-            exactKeyMatch = false
-          }
+          return
         }
-        return
-      }
-    })
+      })
+    }
 
     await measure({
       name: 'bundle install',
@@ -166,29 +169,31 @@ async function run(): Promise<void> {
         }
       })
 
-      await measure({
-        name: 'save bundler cache',
-        block: async () => {
-          if (exactKeyMatch) {
-            core.info(
-              `Cache hit occurred on the primary key ${key}${hash}, not saving cache.`
-            )
+      if (INPUT_ENABLE_CACHE) {
+        await measure({
+          name: 'save bundler cache',
+          block: async () => {
+            if (exactKeyMatch) {
+              core.info(
+                `Cache hit occurred on the primary key ${key}${hash}, not saving cache.`
+              )
+              return
+            }
+            try {
+              await cache.saveCache(paths, `${key}${hash}`)
+            } catch (error) {
+              if (error.name === cache.ValidationError.name) {
+                throw error
+              } else if (error.name === cache.ReserveCacheError.name) {
+                core.info(error.message)
+              } else {
+                core.warning(error.message)
+              }
+            }
             return
           }
-          try {
-            await cache.saveCache(paths, `${key}${hash}`)
-          } catch (error) {
-            if (error.name === cache.ValidationError.name) {
-              throw error
-            } else if (error.name === cache.ReserveCacheError.name) {
-              core.info(error.message)
-            } else {
-              core.warning(error.message)
-            }
-          }
-          return
-        }
-      })
+        })
+      }
     }
   } catch (error) {
     core.setFailed(error.message)

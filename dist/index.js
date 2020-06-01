@@ -2815,7 +2815,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false;
-            const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}), SRC = core.getInput('SRC', {}), INPUT_GEM_SRC = core.getInput('GEM_SRC', {});
+            const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}), SRC = core.getInput('SRC', {}), INPUT_GEM_SRC = core.getInput('GEM_SRC', {}), INPUT_ENABLE_CACHE = core.getInput('ENABLE_CACHE', {});
             const paths = ['vendor/bundle'], key = `Linux-gems-`, restoreKeys = [key, 'bundle-use-ruby-Linux-gems-'];
             yield common_1.measure({
                 name: 'resolve directories',
@@ -2884,37 +2884,39 @@ function run() {
                     core.exportVariable('BUNDLE_GEMFILE', `${gemSrc}`);
                 })
             });
-            yield common_1.measure({
-                name: 'restore bundler cache',
-                block: () => __awaiter(this, void 0, void 0, function* () {
-                    hash = crypto
-                        .createHash('sha256')
-                        .update(fs.readFileSync(`${gemSrc}.lock`))
-                        .digest('hex');
-                    core.debug(`Hash of Gemfile.lock: ${hash}`);
-                    try {
-                        const cacheKey = yield cache.restoreCache(paths, `${key}${hash}`, restoreKeys);
-                        if (!cacheKey) {
-                            core.info(`Cache not found for input keys: ${[
-                                `${key}${hash}`,
-                                ...restoreKeys
-                            ].join(', ')}`);
-                            return;
+            if (INPUT_ENABLE_CACHE) {
+                yield common_1.measure({
+                    name: 'restore bundler cache',
+                    block: () => __awaiter(this, void 0, void 0, function* () {
+                        hash = crypto
+                            .createHash('sha256')
+                            .update(fs.readFileSync(`${gemSrc}.lock`))
+                            .digest('hex');
+                        core.debug(`Hash of Gemfile.lock: ${hash}`);
+                        try {
+                            const cacheKey = yield cache.restoreCache(paths, `${key}${hash}`, restoreKeys);
+                            if (!cacheKey) {
+                                core.info(`Cache not found for input keys: ${[
+                                    `${key}${hash}`,
+                                    ...restoreKeys
+                                ].join(', ')}`);
+                                return;
+                            }
+                            exactKeyMatch = common_1.isExactKeyMatch(`${key}${hash}`, cacheKey);
                         }
-                        exactKeyMatch = common_1.isExactKeyMatch(`${key}${hash}`, cacheKey);
-                    }
-                    catch (error) {
-                        if (error.name === cache.ValidationError.name) {
-                            throw error;
+                        catch (error) {
+                            if (error.name === cache.ValidationError.name) {
+                                throw error;
+                            }
+                            else {
+                                core.warning(error.message);
+                                exactKeyMatch = false;
+                            }
                         }
-                        else {
-                            core.warning(error.message);
-                            exactKeyMatch = false;
-                        }
-                    }
-                    return;
-                })
-            });
+                        return;
+                    })
+                });
+            }
             yield common_1.measure({
                 name: 'bundle install',
                 block: () => __awaiter(this, void 0, void 0, function* () {
@@ -2939,30 +2941,32 @@ function run() {
                         return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
                     })
                 });
-                yield common_1.measure({
-                    name: 'save bundler cache',
-                    block: () => __awaiter(this, void 0, void 0, function* () {
-                        if (exactKeyMatch) {
-                            core.info(`Cache hit occurred on the primary key ${key}${hash}, not saving cache.`);
+                if (INPUT_ENABLE_CACHE) {
+                    yield common_1.measure({
+                        name: 'save bundler cache',
+                        block: () => __awaiter(this, void 0, void 0, function* () {
+                            if (exactKeyMatch) {
+                                core.info(`Cache hit occurred on the primary key ${key}${hash}, not saving cache.`);
+                                return;
+                            }
+                            try {
+                                yield cache.saveCache(paths, `${key}${hash}`);
+                            }
+                            catch (error) {
+                                if (error.name === cache.ValidationError.name) {
+                                    throw error;
+                                }
+                                else if (error.name === cache.ReserveCacheError.name) {
+                                    core.info(error.message);
+                                }
+                                else {
+                                    core.warning(error.message);
+                                }
+                            }
                             return;
-                        }
-                        try {
-                            yield cache.saveCache(paths, `${key}${hash}`);
-                        }
-                        catch (error) {
-                            if (error.name === cache.ValidationError.name) {
-                                throw error;
-                            }
-                            else if (error.name === cache.ReserveCacheError.name) {
-                                core.info(error.message);
-                            }
-                            else {
-                                core.warning(error.message);
-                            }
-                        }
-                        return;
-                    })
-                });
+                        })
+                    });
+                }
             }
         }
         catch (error) {
