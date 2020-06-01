@@ -27,11 +27,8 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: ./
-        with:
-          enable_cache: true
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gems-
+        # with:
+          # enable_cache: true
           # gem_src: sample_site # If there are multiple Gemfiles, specify one
 
       - name: 🚀 deploy
