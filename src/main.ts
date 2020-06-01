@@ -138,8 +138,9 @@ async function run(): Promise<void> {
     await measure({
       name: 'bundle install',
       block: async () => {
+        await exec.exec('bundle config set deployment true')
         await exec.exec(
-          `bundle config deployment true path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`
+          `bundle config path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`
         )
         try {
           await exec.exec(

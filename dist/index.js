@@ -2918,7 +2918,8 @@ function run() {
             yield common_1.measure({
                 name: 'bundle install',
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    yield exec.exec(`bundle config deployment true path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`);
+                    yield exec.exec('bundle config set deployment true');
+                    yield exec.exec(`bundle config path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`);
                     try {
                         yield exec.exec(`bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`);
                     }
