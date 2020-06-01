@@ -15,10 +15,10 @@ async function run(): Promise<void> {
       hash: string,
       exactKeyMatch: boolean,
       installFailure = false
-    const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
-      SRC = core.getInput('SRC', {}),
-      INPUT_GEM_SRC = core.getInput('GEM_SRC', {}),
-      INPUT_ENABLE_CACHE = core.getInput('ENABLE_CACHE', {})
+    const INPUT_JEKYLL_SRC = core.getInput('jekyll_src', {}),
+      SRC = core.getInput('src', {}),
+      INPUT_GEM_SRC = core.getInput('gem_src', {}),
+      INPUT_ENABLE_CACHE = core.getInput('enable_cache', {})
     const paths = ['vendor/bundle'],
       key = `Linux-gems-`,
       restoreKeys = [key, 'bundle-use-ruby-Linux-gems-']
