@@ -2814,9 +2814,9 @@ const common_1 = __webpack_require__(865);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash;
+            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, cacheHit;
             const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}), SRC = core.getInput('SRC', {}), INPUT_GEM_SRC = core.getInput('GEM_SRC', {});
-            const paths = ['vendor/bundle'], key = `Linux-gems-`, restoreKeys = ['Linux-gems-', 'bundle-use-ruby-Linux-gems-'];
+            const paths = ['vendor/bundle'], key = `Linux-gems-`, restoreKeys = [key, 'bundle-use-ruby-Linux-gems-'];
             yield common_1.measure({
                 name: 'resolve directories',
                 block: () => __awaiter(this, void 0, void 0, function* () {
@@ -2892,7 +2892,27 @@ function run() {
                         .update(fs.readFileSync(`${gemSrc}.lock`))
                         .digest('hex');
                     core.debug(`Hash of Gemfile.lock: ${hash}`);
-                    return yield cache.restoreCache(paths, `${key}${hash}`, restoreKeys);
+                    try {
+                        const cacheKey = yield cache.restoreCache(paths, `${key}${hash}`, restoreKeys);
+                        if (!cacheKey) {
+                            core.info(`Cache not found for input keys: ${[
+                                `${key}${hash}`,
+                                ...restoreKeys
+                            ].join(', ')}`);
+                            return;
+                        }
+                        cacheHit = common_1.isExactKeyMatch(`${key}${hash}`, cacheKey);
+                    }
+                    catch (error) {
+                        if (error.name === cache.ValidationError.name) {
+                            throw error;
+                        }
+                        else {
+                            core.warning(error.message);
+                            cacheHit = false;
+                        }
+                    }
+                    return;
                 })
             });
             yield common_1.measure({
@@ -2912,7 +2932,25 @@ function run() {
             yield common_1.measure({
                 name: 'save bundler cache',
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    return yield cache.saveCache(paths, `key${hash}`);
+                    if (cacheHit) {
+                        core.info(`Cache hit occurred on the primary key ${key}${hash}, not saving cache.`);
+                        return;
+                    }
+                    try {
+                        yield cache.saveCache(paths, `key${hash}`);
+                    }
+                    catch (error) {
+                        if (error.name === cache.ValidationError.name) {
+                            throw error;
+                        }
+                        else if (error.name === cache.ReserveCacheError.name) {
+                            core.info(error.message);
+                        }
+                        else {
+                            core.warning(error.message);
+                        }
+                    }
+                    return;
                 })
             });
         }
@@ -5325,7 +5363,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.measure = void 0;
+exports.isExactKeyMatch = exports.measure = void 0;
 const core = __importStar(__webpack_require__(470));
 const perf_hooks_1 = __webpack_require__(630);
 function measure({ name, block }) {
@@ -5347,6 +5385,13 @@ function measure({ name, block }) {
     });
 }
 exports.measure = measure;
+function isExactKeyMatch(key, cacheKey) {
+    return !!(cacheKey &&
+        cacheKey.localeCompare(key, undefined, {
+            sensitivity: 'accent'
+        }) === 0);
+}
+exports.isExactKeyMatch = isExactKeyMatch;
 
 
 /***/ }),

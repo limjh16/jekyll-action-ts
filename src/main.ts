@@ -4,7 +4,7 @@ import * as glob from '@actions/glob'
 import * as cache from '@actions/cache'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
-import {measure} from './common'
+import {measure, isExactKeyMatch} from './common'
 
 async function run(): Promise<void> {
   try {
@@ -12,13 +12,14 @@ async function run(): Promise<void> {
       gemSrc = '',
       gemArr: string[],
       jekyllArr: string[],
-      hash: string
+      hash: string,
+      cacheHit: boolean
     const INPUT_JEKYLL_SRC = core.getInput('JEKYLL_SRC', {}),
       SRC = core.getInput('SRC', {}),
       INPUT_GEM_SRC = core.getInput('GEM_SRC', {})
     const paths = ['vendor/bundle'],
       key = `Linux-gems-`,
-      restoreKeys = ['Linux-gems-', 'bundle-use-ruby-Linux-gems-']
+      restoreKeys = [key, 'bundle-use-ruby-Linux-gems-']
 
     await measure({
       name: 'resolve directories',
@@ -105,7 +106,31 @@ async function run(): Promise<void> {
           .update(fs.readFileSync(`${gemSrc}.lock`))
           .digest('hex')
         core.debug(`Hash of Gemfile.lock: ${hash}`)
-        return await cache.restoreCache(paths, `${key}${hash}`, restoreKeys)
+        try {
+          const cacheKey = await cache.restoreCache(
+            paths,
+            `${key}${hash}`,
+            restoreKeys
+          )
+          if (!cacheKey) {
+            core.info(
+              `Cache not found for input keys: ${[
+                `${key}${hash}`,
+                ...restoreKeys
+              ].join(', ')}`
+            )
+            return
+          }
+          cacheHit = isExactKeyMatch(`${key}${hash}`, cacheKey)
+        } catch (error) {
+          if (error.name === cache.ValidationError.name) {
+            throw error
+          } else {
+            core.warning(error.message)
+            cacheHit = false
+          }
+        }
+        return
       }
     })
 
@@ -132,7 +157,24 @@ async function run(): Promise<void> {
     await measure({
       name: 'save bundler cache',
       block: async () => {
-        return await cache.saveCache(paths, `key${hash}`)
+        if (cacheHit) {
+          core.info(
+            `Cache hit occurred on the primary key ${key}${hash}, not saving cache.`
+          )
+          return
+        }
+        try {
+          await cache.saveCache(paths, `key${hash}`)
+        } catch (error) {
+          if (error.name === cache.ValidationError.name) {
+            throw error
+          } else if (error.name === cache.ReserveCacheError.name) {
+            core.info(error.message)
+          } else {
+            core.warning(error.message)
+          }
+        }
+        return
       }
     })
   } catch (error) {
