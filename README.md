@@ -12,6 +12,8 @@ V2 of this action removes the `git push` step from this action (basically only b
 
 This can also automatically find a `Gemfile` if it isn't in the root directory, and in the case of multiple Gemfiles find the one in the same directory as `_config.yml`. This can be helpful in cases where you have a `docs` folder containing a website inside a ruby project which has a Gemfile by itself.
 
+It also automatically caches the vendor/bundle directory for faster build times, by setting the ``enable_cache`` input to true in the workflow file. This is preferred over [actions/cache](https://github.com/actions/cache) (for now) since it decreases the time needed to find the Jekyll source and Gemfile.
+
 ## Official jekyll tutorial
 
 V2 of this action completely differs from the official jekyll tutorial. However, I probably don't have time to write a full guide.
@@ -88,14 +90,6 @@ jobs:
         # with:
           # fetch-depth: '0'
 
-      - name: 📝 cache bundler files
-        uses: actions/cache@v1
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gems-
-
       - name: 💎 setup ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -103,7 +97,8 @@ jobs:
 
       - name: 🔨 install dependencies & build site
         uses: limjh16/jekyll-action-ts@v2
-        # with:
+        with:
+          enable_cache: true
           # gem_src: sample_site # If there are multiple Gemfiles, specify one
 
       - name: 🚀 deploy
