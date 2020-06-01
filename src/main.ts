@@ -164,7 +164,7 @@ async function run(): Promise<void> {
           return
         }
         try {
-          await cache.saveCache(paths, `key${hash}`)
+          await cache.saveCache(paths, `${key}${hash}`)
         } catch (error) {
           if (error.name === cache.ValidationError.name) {
             throw error

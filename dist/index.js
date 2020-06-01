@@ -2937,7 +2937,7 @@ function run() {
                         return;
                     }
                     try {
-                        yield cache.saveCache(paths, `key${hash}`);
+                        yield cache.saveCache(paths, `${key}${hash}`);
                     }
                     catch (error) {
                         if (error.name === cache.ValidationError.name) {
