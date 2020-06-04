@@ -100,14 +100,19 @@ jobs:
         uses: limjh16/jekyll-action-ts@v2
         with:
           enable_cache: true
+          ### Enables caching. Similar to https://github.com/actions/cache.
+          #
+          # format_output: true
+          ### Uses prettier https://prettier.io to format jekyll output HTML.
+          #
           # prettier_opts: '{ "useTabs": true }'
           ### Sets prettier options (in JSON) to format output HTML. For example, output tabs over spaces.
           ### Possible options are outlined in https://prettier.io/docs/en/options.html
           #
-          # format_output: false
-          ### Uses prettier https://prettier.io to format jekyll output HTML.
-          ### Set to true by default. If you are using some HTML compression,
-          ### causes issues, set this to false.
+          # prettier_ignore: 'about/*'
+          ### Ignore paths for prettier to not format those html files.
+          ### Useful if the file is exceptionally large, so formatting it takes a while.
+          ### Also useful if HTML compression is enabled for that file / formatting messes it up.
           #
           # jekyll_src: sample_site
           ### If the jekyll website source is not in root, specify the directory. (in this case, sample_site)

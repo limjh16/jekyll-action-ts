@@ -19,7 +19,6 @@ inputs:
   format_output:
     description: 'Format the output html files'
     required: false
-    default: true
   prettier_opts:
     description: Custom prettier options to format output html files
     required: false

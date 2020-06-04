@@ -182,13 +182,13 @@ async function run(): Promise<void> {
 			});
 
 			// maybe run this async with saving cache
-			if (INPUT_FORMAT_OUTPUT) {
+			if (INPUT_FORMAT_OUTPUT || INPUT_PRETTIER_OPTS) {
 				await measure({
 					name: "format output html files",
 					block: async () => {
 						let globFiles = ["_site/**/*.html"];
 						if (INPUT_PRETTIER_IGNORE) {
-							globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!" + i));
+							globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!_site/" + i));
 						}
 						const formatFileArray = await (
 							await glob.create(globFiles.join("\n"))

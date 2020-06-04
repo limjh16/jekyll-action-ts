@@ -35603,13 +35603,13 @@ function run() {
                     }),
                 });
                 // maybe run this async with saving cache
-                if (INPUT_FORMAT_OUTPUT) {
+                if (INPUT_FORMAT_OUTPUT || INPUT_PRETTIER_OPTS) {
                     yield common_1.measure({
                         name: "format output html files",
                         block: () => __awaiter(this, void 0, void 0, function* () {
                             let globFiles = ["_site/**/*.html"];
                             if (INPUT_PRETTIER_IGNORE) {
-                                globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!" + i));
+                                globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!_site/" + i));
                             }
                             const formatFileArray = yield (yield glob.create(globFiles.join("\n"))).glob();
                             let defaultOpts = {
