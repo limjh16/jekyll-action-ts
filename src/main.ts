@@ -4,7 +4,8 @@ import * as glob from "@actions/glob";
 import * as cache from "@actions/cache";
 import * as crypto from "crypto";
 import * as fs from "fs";
-import * as prettier from "prettier";
+import * as prettier from "prettier/standalone";
+import parser from "prettier/parser-html";
 import { measure, isExactKeyMatch } from "./common";
 
 async function run(): Promise<void> {
@@ -26,7 +27,8 @@ async function run(): Promise<void> {
 			INPUT_RESTORE_KEYS = core
 				.getInput("restore-keys", {})
 				.split("\n")
-				.filter((x) => x !== "");
+				.filter((x) => x !== ""),
+			INPUT_FORMAT_OUTPUT = core.getInput("format_output");
 		const paths = ["vendor/bundle"];
 		if (INPUT_RESTORE_KEYS) restoreKeys = INPUT_RESTORE_KEYS;
 		else restoreKeys = ["Linux-gems-", "bundle-use-ruby-Linux-gems-"];
@@ -178,24 +180,27 @@ async function run(): Promise<void> {
 			});
 
 			// maybe run this async with saving cache
-			await measure({
-				name: "format output html files",
-				block: async () => {
-					const formatFileArray = await (
-						await glob.create(["_site/**/*.html"].join("\n"))
-					).glob();
-					for (const element of formatFileArray) {
-						core.debug(element);
-						fs.writeFileSync(
-							element,
-							prettier.format(fs.readFileSync(element, "utf8"), {
-								useTabs: true,
-								parser: "html",
-							})
-						);
-					}
-				},
-			});
+			if (INPUT_FORMAT_OUTPUT) {
+				await measure({
+					name: "format output html files",
+					block: async () => {
+						const formatFileArray = await (
+							await glob.create(["_site/**/*.html"].join("\n"))
+						).glob();
+						for (const element of formatFileArray) {
+							core.debug(element);
+							fs.writeFileSync(
+								element,
+								prettier.format(fs.readFileSync(element, "utf8"), {
+									useTabs: true,
+									parser: "html",
+									plugins: [parser],
+								})
+							);
+						}
+					},
+				});
+			}
 
 			if (INPUT_ENABLE_CACHE) {
 				await measure({
