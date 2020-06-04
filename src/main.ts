@@ -5,7 +5,9 @@ import * as cache from "@actions/cache";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as prettier from "prettier/standalone";
-import parser from "prettier/parser-html";
+import parserHTML from "prettier/parser-html";
+import parserJS from "prettier/parser-babel";
+import parserCSS from "prettier/parser-postcss";
 import { measure, isExactKeyMatch } from "./common";
 
 async function run(): Promise<void> {
@@ -192,9 +194,8 @@ async function run(): Promise<void> {
 							fs.writeFileSync(
 								element,
 								prettier.format(fs.readFileSync(element, "utf8"), {
-									useTabs: true,
 									parser: "html",
-									plugins: [parser],
+									plugins: [parserHTML, parserCSS, parserJS],
 								})
 							);
 						}
