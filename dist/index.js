@@ -35470,7 +35470,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let jekyllSrc = "", gemSrc = "", gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
-            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
+            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"), INPUT_PRETTIER_IGNORE = common_1.getInputAsArray("prettier_ignore");
             const paths = ["vendor/bundle"];
             if (INPUT_RESTORE_KEYS)
                 restoreKeys = INPUT_RESTORE_KEYS;
@@ -35607,7 +35607,11 @@ function run() {
                     yield common_1.measure({
                         name: "format output html files",
                         block: () => __awaiter(this, void 0, void 0, function* () {
-                            const formatFileArray = yield (yield glob.create(["_site/**/*.html"].join("\n"))).glob();
+                            let globFiles = ["_site/**/*.html"];
+                            if (INPUT_PRETTIER_IGNORE) {
+                                globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!" + i));
+                            }
+                            const formatFileArray = yield (yield glob.create(globFiles.join("\n"))).glob();
                             let defaultOpts = {
                                 parser: "html",
                                 plugins: [parser_html_1.default, parser_postcss_1.default, parser_babel_1.default],

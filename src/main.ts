@@ -29,7 +29,8 @@ async function run(): Promise<void> {
 			INPUT_KEY = core.getInput("key", {}),
 			INPUT_RESTORE_KEYS = getInputAsArray("restore-keys"),
 			INPUT_FORMAT_OUTPUT = core.getInput("format_output"),
-			INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
+			INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"),
+			INPUT_PRETTIER_IGNORE = getInputAsArray("prettier_ignore");
 		const paths = ["vendor/bundle"];
 		if (INPUT_RESTORE_KEYS) restoreKeys = INPUT_RESTORE_KEYS;
 		else restoreKeys = ["Linux-gems-", "bundle-use-ruby-Linux-gems-"];
@@ -185,8 +186,12 @@ async function run(): Promise<void> {
 				await measure({
 					name: "format output html files",
 					block: async () => {
+						let globFiles = ["_site/**/*.html"];
+						if (INPUT_PRETTIER_IGNORE) {
+							globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!" + i));
+						}
 						const formatFileArray = await (
-							await glob.create(["_site/**/*.html"].join("\n"))
+							await glob.create(globFiles.join("\n"))
 						).glob();
 						let defaultOpts: Options = {
 							parser: "html",

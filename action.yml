@@ -23,6 +23,9 @@ inputs:
   prettier_opts:
     description: Custom prettier options to format output html files
     required: false
+  prettier_ignore:
+    description: Skips formatting certain files / paths
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'
