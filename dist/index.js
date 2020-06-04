@@ -2814,18 +2814,18 @@ const common_1 = __webpack_require__(865);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let jekyllSrc = '', gemSrc = '', gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
-            const INPUT_JEKYLL_SRC = core.getInput('jekyll_src', {}), SRC = core.getInput('src', {}), INPUT_GEM_SRC = core.getInput('gem_src', {}), INPUT_ENABLE_CACHE = core.getInput('enable_cache', {}), INPUT_KEY = core.getInput('key', {}), INPUT_RESTORE_KEYS = core
-                .getInput('restore-keys', {})
-                .split('\n')
-                .filter(x => x !== '');
-            const paths = ['vendor/bundle'];
+            let jekyllSrc = "", gemSrc = "", gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
+            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = core
+                .getInput("restore-keys", {})
+                .split("\n")
+                .filter((x) => x !== "");
+            const paths = ["vendor/bundle"];
             if (INPUT_RESTORE_KEYS)
                 restoreKeys = INPUT_RESTORE_KEYS;
             else
-                restoreKeys = ['Linux-gems-', 'bundle-use-ruby-Linux-gems-'];
+                restoreKeys = ["Linux-gems-", "bundle-use-ruby-Linux-gems-"];
             yield common_1.measure({
-                name: 'resolve directories',
+                name: "resolve directories",
                 block: () => __awaiter(this, void 0, void 0, function* () {
                     // Resolve Jekyll directory
                     if (INPUT_JEKYLL_SRC) {
@@ -2837,9 +2837,9 @@ function run() {
                         core.debug(`Using ${jekyllSrc} environment var value as a source directory`);
                     }
                     else {
-                        jekyllArr = yield (yield glob.create(['**/_config.yml', '!**/vendor/bundle/**'].join('\n'))).glob();
+                        jekyllArr = yield (yield glob.create(["**/_config.yml", "!**/vendor/bundle/**"].join("\n"))).glob();
                         for (let i = 0; i < jekyllArr.length; i++) {
-                            jekyllArr[i] = jekyllArr[i].replace(/_config\.yml/, '');
+                            jekyllArr[i] = jekyllArr[i].replace(/_config\.yml/, "");
                         }
                         if (jekyllArr.length > 1) {
                             throw new Error(`error: found ${jekyllArr.length} _config.yml! Please define which to use with input variable "JEKYLL_SRC"`);
@@ -2852,27 +2852,27 @@ function run() {
                     // Resolve Gemfile directory
                     if (INPUT_GEM_SRC) {
                         gemSrc = INPUT_GEM_SRC;
-                        if (!gemSrc.endsWith('Gemfile')) {
-                            if (!gemSrc.endsWith('/')) {
-                                gemSrc = gemSrc.concat('/');
+                        if (!gemSrc.endsWith("Gemfile")) {
+                            if (!gemSrc.endsWith("/")) {
+                                gemSrc = gemSrc.concat("/");
                             }
-                            gemSrc = gemSrc.concat('Gemfile');
+                            gemSrc = gemSrc.concat("Gemfile");
                         }
                     }
                     else {
-                        gemArr = yield (yield glob.create(['**/Gemfile', '!**/vendor/bundle/**'].join('\n'))).glob();
+                        gemArr = yield (yield glob.create(["**/Gemfile", "!**/vendor/bundle/**"].join("\n"))).glob();
                         if (gemArr.length > 1) {
-                            if (!jekyllSrc.endsWith('/')) {
-                                jekyllSrc = jekyllSrc.concat('/');
+                            if (!jekyllSrc.endsWith("/")) {
+                                jekyllSrc = jekyllSrc.concat("/");
                             }
-                            if (jekyllSrc.startsWith('.')) {
+                            if (jekyllSrc.startsWith(".")) {
                                 jekyllSrc = jekyllSrc.replace(/\.\/|\./, `${process.env.GITHUB_WORKSPACE}/`);
                             }
-                            else if (!jekyllSrc.startsWith('/')) {
+                            else if (!jekyllSrc.startsWith("/")) {
                                 jekyllSrc = `${process.env.GITHUB_WORKSPACE}/`.concat(jekyllSrc);
                             }
                             for (const element of gemArr) {
-                                if (element.replace(/Gemfile/, '') === jekyllSrc) {
+                                if (element.replace(/Gemfile/, "") === jekyllSrc) {
                                     gemSrc = element;
                                 }
                             }
@@ -2888,18 +2888,18 @@ function run() {
                         }
                     }
                     core.debug(`Resolved ${gemSrc} as Gemfile`);
-                    core.exportVariable('BUNDLE_GEMFILE', `${gemSrc}`);
-                })
+                    core.exportVariable("BUNDLE_GEMFILE", `${gemSrc}`);
+                }),
             });
             if (INPUT_ENABLE_CACHE) {
                 yield common_1.measure({
-                    name: 'restore bundler cache',
+                    name: "restore bundler cache",
                     block: () => __awaiter(this, void 0, void 0, function* () {
                         if (!INPUT_KEY) {
                             hash = crypto
-                                .createHash('sha256')
+                                .createHash("sha256")
                                 .update(fs.readFileSync(`${gemSrc}.lock`))
-                                .digest('hex');
+                                .digest("hex");
                             core.debug(`Hash of Gemfile.lock: ${hash}`);
                             key = `Linux-gems-${hash}`;
                         }
@@ -2908,7 +2908,7 @@ function run() {
                         try {
                             const cacheKey = yield cache.restoreCache(paths, key, restoreKeys);
                             if (!cacheKey) {
-                                core.info(`Cache not found for input keys: ${[key, ...restoreKeys].join(', ')}`);
+                                core.info(`Cache not found for input keys: ${[key, ...restoreKeys].join(", ")}`);
                                 return;
                             }
                             exactKeyMatch = common_1.isExactKeyMatch(key, cacheKey);
@@ -2923,13 +2923,13 @@ function run() {
                             }
                         }
                         return;
-                    })
+                    }),
                 });
             }
             yield common_1.measure({
-                name: 'bundle install',
+                name: "bundle install",
                 block: () => __awaiter(this, void 0, void 0, function* () {
-                    yield exec.exec('bundle config set deployment true');
+                    yield exec.exec("bundle config set deployment true");
                     yield exec.exec(`bundle config path ${process.env.GITHUB_WORKSPACE}/vendor/bundle`);
                     try {
                         yield exec.exec(`bundle install --jobs=4 --retry=3 --gemfile=${gemSrc}`);
@@ -2940,19 +2940,19 @@ function run() {
                         throw error;
                     }
                     return;
-                })
+                }),
             });
             if (!installFailure) {
                 yield common_1.measure({
-                    name: 'jekyll build',
+                    name: "jekyll build",
                     block: () => __awaiter(this, void 0, void 0, function* () {
-                        core.exportVariable('JEKYLL_ENV', 'production');
+                        core.exportVariable("JEKYLL_ENV", "production");
                         return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
-                    })
+                    }),
                 });
                 if (INPUT_ENABLE_CACHE) {
                     yield common_1.measure({
-                        name: 'save bundler cache',
+                        name: "save bundler cache",
                         block: () => __awaiter(this, void 0, void 0, function* () {
                             if (exactKeyMatch) {
                                 core.info(`Cache hit occurred on the primary key ${key}, not saving cache.`);
@@ -2973,7 +2973,7 @@ function run() {
                                 }
                             }
                             return;
-                        })
+                        }),
                     });
                 }
             }
