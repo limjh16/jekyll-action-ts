@@ -4,6 +4,7 @@ import * as glob from "@actions/glob";
 import * as cache from "@actions/cache";
 import * as crypto from "crypto";
 import * as fs from "fs";
+import * as prettier from "prettier";
 import { measure, isExactKeyMatch } from "./common";
 
 async function run(): Promise<void> {
@@ -173,6 +174,26 @@ async function run(): Promise<void> {
 				block: async () => {
 					core.exportVariable("JEKYLL_ENV", "production");
 					return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
+				},
+			});
+
+			// maybe run this async with saving cache
+			await measure({
+				name: "format output html files",
+				block: async () => {
+					const formatFileArray = await (
+						await glob.create(["_site/**/*.html"].join("\n"))
+					).glob();
+					for (const element of formatFileArray) {
+						core.debug(element);
+						fs.writeFileSync(
+							element,
+							prettier.format(fs.readFileSync(element, "utf8"), {
+								useTabs: true,
+								parser: "html",
+							})
+						);
+					}
 				},
 			});
 
