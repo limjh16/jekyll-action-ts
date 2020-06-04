@@ -26,10 +26,18 @@ jobs:
           ruby-version: 2.6 # can change this to 2.7 or whatever version you prefer
 
       - name: 🔨 install dependencies & build site
-        uses: ./
+        uses: limjh16/jekyll-action-ts@v2
         with:
           enable_cache: true
-          prettier_opts: '{ "useTabs": true }'
+          # prettier_opts: '{ "useTabs": true }'
+          ### Sets prettier options (in JSON) to format output HTML. For example, output tabs over spaces.
+          ### Possible options are outlined in https://prettier.io/docs/en/options.html
+          #
+          # format_output: false
+          ### Uses prettier https://prettier.io to format jekyll output HTML.
+          ### Set to true by default. If you are using some HTML compression,
+          ### causes issues, set this to false.
+          #
           # jekyll_src: sample_site
           ### If the jekyll website source is not in root, specify the directory. (in this case, sample_site)
           ### By default, this is not required as the action searches for a _config.yml automatically.
@@ -43,9 +51,9 @@ jobs:
           ### In that case this input may not be needed as well.
           #
           # key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          # restore-keys: |
-          #   ${{ runner.os }}-gems-
+          # restore-keys: ${{ runner.os }}-gems-
           ### In cases where you want to specify the cache key, enable the above 2 inputs
+          ### Follows the format here https://github.com/actions/cache
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3

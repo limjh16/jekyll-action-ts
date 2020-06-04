@@ -12,7 +12,9 @@ V2 of this action removes the `git push` step from this action (basically only b
 
 This can also automatically find a `Gemfile` if it isn't in the root directory, and in the case of multiple Gemfiles find the one in the same directory as `_config.yml`. This can be helpful in cases where you have a `docs` folder containing a website inside a ruby project which has a Gemfile by itself.
 
-It also automatically caches the vendor/bundle directory for faster build times, by setting the ``enable_cache`` input to true in the workflow file. This is preferred over [actions/cache](https://github.com/actions/cache) (for now) since it decreases the time needed to find the Jekyll source and Gemfile.
+It also automatically caches the vendor/bundle directory for faster build times, by setting the `enable_cache` input to true in the workflow file. This is preferred over [actions/cache](https://github.com/actions/cache) (for now) since it decreases the time needed to find the Jekyll source and Gemfile.
+
+Additionally, it uses [prettier](prettier.io/) to format the output HTML so it is more readable (since jekyll is known to output [excessive newlines due to liquid](https://github.com/jekyll/jekyll-help/issues/193)). Prettier options can be specified through the `prettier_opts` input.
 
 ## Official jekyll tutorial
 
@@ -24,7 +26,7 @@ If you prefer to follow the official [jekyll docs](https://jekyllrb.com/docs/con
 
 ### Create a Jekyll site
 
-If you repo doesn't already have one, create a new Jekyll site:  `jekyll new sample-site`. See [the Jekyll website](https://jekyllrb.com/) for more information. In this repo, we have created a site within a `sample_site` folder within the repository because the repository's main goal is not to be a website. If it was the case, we would have created the site at the root of the repository.
+If you repo doesn't already have one, create a new Jekyll site: `jekyll new sample-site`. See [the Jekyll website](https://jekyllrb.com/) for more information. In this repo, we have created a site within a `sample_site` folder within the repository because the repository's main goal is not to be a website. If it was the case, we would have created the site at the root of the repository.
 
 ### Create a `Gemfile`
 
@@ -67,7 +69,6 @@ Put the `workflow.yml` file below into `.github/workflows`. It can be copied fro
 [`.github/workflows/workflow.yml`](https://github.com/limjh16/jekyll-action-ts/blob/master/.github/workflows/workflow.yml):
 
 ```yaml
-
 name: Build and deploy jekyll site
 
 on:
@@ -76,7 +77,7 @@ on:
       - master
       # - source
       # It is highly recommended that you only run this action on push to a
-        # specific branch, eg. master or source (if on *.github.io repo)
+      # specific branch, eg. master or source (if on *.github.io repo)
 
 jobs:
   jekyll:
@@ -84,12 +85,12 @@ jobs:
     steps:
       - name: 📂 setup
         uses: actions/checkout@v2
+
         # include the lines below if you are using jekyll-last-modified-at
         # or if you would otherwise need to fetch the full commit history
         # however this may be very slow for large repositories!
         # with:
-          # fetch-depth: '0'
-
+        # fetch-depth: '0'
       - name: 💎 setup ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -99,6 +100,15 @@ jobs:
         uses: limjh16/jekyll-action-ts@v2
         with:
           enable_cache: true
+          # prettier_opts: '{ "useTabs": true }'
+          ### Sets prettier options (in JSON) to format output HTML. For example, output tabs over spaces.
+          ### Possible options are outlined in https://prettier.io/docs/en/options.html
+          #
+          # format_output: false
+          ### Uses prettier https://prettier.io to format jekyll output HTML.
+          ### Set to true by default. If you are using some HTML compression,
+          ### causes issues, set this to false.
+          #
           # jekyll_src: sample_site
           ### If the jekyll website source is not in root, specify the directory. (in this case, sample_site)
           ### By default, this is not required as the action searches for a _config.yml automatically.
@@ -112,9 +122,9 @@ jobs:
           ### In that case this input may not be needed as well.
           #
           # key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          # restore-keys: |
-          #   ${{ runner.os }}-gems-
+          # restore-keys: ${{ runner.os }}-gems-
           ### In cases where you want to specify the cache key, enable the above 2 inputs
+          ### Follows the format here https://github.com/actions/cache
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3
@@ -124,13 +134,12 @@ jobs:
           # if the repo you are deploying to is <username>.github.io, uncomment the line below.
           # if you are including the line below, make sure your source files are NOT in the master branch:
           # publish_branch: master
-
 ```
 
-Upon successful execution, the GitHub Pages publishing will happen automatically and will be listed on the *_environment_* tab of your repository.
+Upon successful execution, the GitHub Pages publishing will happen automatically and will be listed on the _*environment*_ tab of your repository.
 
 ![image](https://user-images.githubusercontent.com/2787414/51083469-31e29700-171b-11e9-8f10-8c02dd485f83.png)
 
-Just click on the *_View deployment_* button of the `github-pages` environment to navigate to your GitHub Pages site.
+Just click on the _*View deployment*_ button of the `github-pages` environment to navigate to your GitHub Pages site.
 
 ![image](https://user-images.githubusercontent.com/2787414/51083411-188d1b00-171a-11e9-9a25-f8b06f33053e.png)
