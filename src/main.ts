@@ -5,6 +5,7 @@ import * as cache from "@actions/cache";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as prettier from "prettier/standalone";
+import { Options } from "prettier";
 import parserHTML from "prettier/parser-html";
 import parserJS from "prettier/parser-babel";
 import parserCSS from "prettier/parser-postcss";
@@ -30,7 +31,8 @@ async function run(): Promise<void> {
 				.getInput("restore-keys", {})
 				.split("\n")
 				.filter((x) => x !== ""),
-			INPUT_FORMAT_OUTPUT = core.getInput("format_output");
+			INPUT_FORMAT_OUTPUT = core.getInput("format_output"),
+			INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
 		const paths = ["vendor/bundle"];
 		if (INPUT_RESTORE_KEYS) restoreKeys = INPUT_RESTORE_KEYS;
 		else restoreKeys = ["Linux-gems-", "bundle-use-ruby-Linux-gems-"];
@@ -189,14 +191,21 @@ async function run(): Promise<void> {
 						const formatFileArray = await (
 							await glob.create(["_site/**/*.html"].join("\n"))
 						).glob();
+						let defaultOpts: Options = {
+							parser: "html",
+							plugins: [parserHTML, parserCSS, parserJS],
+						};
+						if (INPUT_PRETTIER_OPTS) {
+							defaultOpts = {
+								...defaultOpts,
+								...JSON.parse(INPUT_PRETTIER_OPTS),
+							};
+						}
 						for (const element of formatFileArray) {
 							core.debug(element);
 							fs.writeFileSync(
 								element,
-								prettier.format(fs.readFileSync(element, "utf8"), {
-									parser: "html",
-									plugins: [parserHTML, parserCSS, parserJS],
-								})
+								prettier.format(fs.readFileSync(element, "utf8"), defaultOpts)
 							);
 						}
 					},

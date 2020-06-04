@@ -35473,7 +35473,7 @@ function run() {
             const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = core
                 .getInput("restore-keys", {})
                 .split("\n")
-                .filter((x) => x !== ""), INPUT_FORMAT_OUTPUT = core.getInput("format_output");
+                .filter((x) => x !== ""), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
             const paths = ["vendor/bundle"];
             if (INPUT_RESTORE_KEYS)
                 restoreKeys = INPUT_RESTORE_KEYS;
@@ -35611,12 +35611,16 @@ function run() {
                         name: "format output html files",
                         block: () => __awaiter(this, void 0, void 0, function* () {
                             const formatFileArray = yield (yield glob.create(["_site/**/*.html"].join("\n"))).glob();
+                            let defaultOpts = {
+                                parser: "html",
+                                plugins: [parser_html_1.default, parser_postcss_1.default, parser_babel_1.default],
+                            };
+                            if (INPUT_PRETTIER_OPTS) {
+                                defaultOpts = Object.assign(Object.assign({}, defaultOpts), JSON.parse(INPUT_PRETTIER_OPTS));
+                            }
                             for (const element of formatFileArray) {
                                 core.debug(element);
-                                fs.writeFileSync(element, prettier.format(fs.readFileSync(element, "utf8"), {
-                                    parser: "html",
-                                    plugins: [parser_html_1.default, parser_postcss_1.default, parser_babel_1.default],
-                                }));
+                                fs.writeFileSync(element, prettier.format(fs.readFileSync(element, "utf8"), defaultOpts));
                             }
                         }),
                     });
@@ -36056,7 +36060,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isExactKeyMatch = exports.measure = void 0;
 const core = __importStar(__webpack_require__(470));
 const perf_hooks_1 = __webpack_require__(630);
-function measure({ name, block }) {
+function measure({ name, block, }) {
     return __awaiter(this, void 0, void 0, function* () {
         return yield core.group(name, () => __awaiter(this, void 0, void 0, function* () {
             const start = perf_hooks_1.performance.now();
@@ -36078,7 +36082,7 @@ exports.measure = measure;
 function isExactKeyMatch(key, cacheKey) {
     return !!(cacheKey &&
         cacheKey.localeCompare(key, undefined, {
-            sensitivity: 'accent'
+            sensitivity: "accent",
         }) === 0);
 }
 exports.isExactKeyMatch = isExactKeyMatch;

@@ -29,7 +29,7 @@ jobs:
         uses: ./
         with:
           enable_cache: true
-          format_output: true
+          prettier_opts: '{ "useTabs": true }'
           # jekyll_src: sample_site
           ### If the jekyll website source is not in root, specify the directory. (in this case, sample_site)
           ### By default, this is not required as the action searches for a _config.yml automatically.
