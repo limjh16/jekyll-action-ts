@@ -1,23 +1,23 @@
 {
-  "name": "typescript-action",
-  "version": "0.0.0",
+  "name": "jekyll-action-ts",
+  "version": "2.3.0",
   "private": true,
-  "description": "TypeScript template action",
-  "main": "lib/main.js",
+  "description": "A GitHub Action to build and publish Jekyll sites to GitHub Pages without Docker",
+  "main": "src/main.ts",
   "scripts": {
     "build": "ncc build ./src/main.ts",
     "all": "prettier --write **/*.ts && eslint src/**/*.ts && npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/limjh16/jekyll-action-ts.git"
   },
   "keywords": [
     "actions",
     "node",
     "setup"
   ],
-  "author": "YourNameOrOrganization",
+  "author": "limjh16",
   "license": "MIT",
   "dependencies": {
     "@actions/cache": "^0.2.1",
