@@ -28,3 +28,13 @@ export function isExactKeyMatch(key: string, cacheKey?: string): boolean {
 		}) === 0
 	);
 }
+export function getInputAsArray(
+	name: string,
+	options?: core.InputOptions
+): string[] {
+	return core
+		.getInput(name, options)
+		.split("\n")
+		.map((s) => s.trim())
+		.filter((x) => x !== "");
+}

@@ -35470,10 +35470,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let jekyllSrc = "", gemSrc = "", gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
-            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = core
-                .getInput("restore-keys", {})
-                .split("\n")
-                .filter((x) => x !== ""), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
+            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
             const paths = ["vendor/bundle"];
             if (INPUT_RESTORE_KEYS)
                 restoreKeys = INPUT_RESTORE_KEYS;
@@ -36057,7 +36054,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isExactKeyMatch = exports.measure = void 0;
+exports.getInputAsArray = exports.isExactKeyMatch = exports.measure = void 0;
 const core = __importStar(__webpack_require__(470));
 const perf_hooks_1 = __webpack_require__(630);
 function measure({ name, block, }) {
@@ -36086,6 +36083,14 @@ function isExactKeyMatch(key, cacheKey) {
         }) === 0);
 }
 exports.isExactKeyMatch = isExactKeyMatch;
+function getInputAsArray(name, options) {
+    return core
+        .getInput(name, options)
+        .split("\n")
+        .map((s) => s.trim())
+        .filter((x) => x !== "");
+}
+exports.getInputAsArray = getInputAsArray;
 
 
 /***/ }),

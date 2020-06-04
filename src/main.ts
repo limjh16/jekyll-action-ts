@@ -9,7 +9,7 @@ import { Options } from "prettier";
 import parserHTML from "prettier/parser-html";
 import parserJS from "prettier/parser-babel";
 import parserCSS from "prettier/parser-postcss";
-import { measure, isExactKeyMatch } from "./common";
+import { measure, isExactKeyMatch, getInputAsArray } from "./common";
 
 async function run(): Promise<void> {
 	try {
@@ -27,10 +27,7 @@ async function run(): Promise<void> {
 			INPUT_GEM_SRC = core.getInput("gem_src", {}),
 			INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}),
 			INPUT_KEY = core.getInput("key", {}),
-			INPUT_RESTORE_KEYS = core
-				.getInput("restore-keys", {})
-				.split("\n")
-				.filter((x) => x !== ""),
+			INPUT_RESTORE_KEYS = getInputAsArray("restore-keys"),
 			INPUT_FORMAT_OUTPUT = core.getInput("format_output"),
 			INPUT_PRETTIER_OPTS = core.getInput("prettier_opts");
 		const paths = ["vendor/bundle"];
