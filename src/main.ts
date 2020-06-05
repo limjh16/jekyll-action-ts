@@ -188,7 +188,9 @@ async function run(): Promise<void> {
 					block: async () => {
 						let globFiles = ["_site/**/*.html"];
 						if (INPUT_PRETTIER_IGNORE) {
-							globFiles.push(...INPUT_PRETTIER_IGNORE.map((i) => "!_site/" + i));
+							globFiles.push(
+								...INPUT_PRETTIER_IGNORE.map((i) => "!_site/" + i)
+							);
 						}
 						const formatFileArray = await (
 							await glob.create(globFiles.join("\n"))
