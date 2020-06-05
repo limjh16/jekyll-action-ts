@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as glob from "@actions/glob";
 import * as cache from "@actions/cache";
+import * as io from "@actions/io";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as prettier from "prettier/standalone";
@@ -142,7 +143,6 @@ async function run(): Promise<void> {
 							throw error;
 						} else {
 							core.warning(error.message);
-							exactKeyMatch = false;
 						}
 					}
 					return;
@@ -186,7 +186,7 @@ async function run(): Promise<void> {
 				await measure({
 					name: "format output html files",
 					block: async () => {
-						let globFiles = ["_site/**/*.html"];
+						const globFiles = ["_site/**/*.html"];
 						if (INPUT_PRETTIER_IGNORE) {
 							globFiles.push(
 								...INPUT_PRETTIER_IGNORE.map((i) => "!_site/" + i)
@@ -205,13 +205,80 @@ async function run(): Promise<void> {
 								...JSON.parse(INPUT_PRETTIER_OPTS),
 							};
 						}
+
+						const cacheHTMLPath = ["_site/**/*.cache"],
+							formatCacheList = [],
+							HTMLFiles: {
+								[key: string]: string;
+							} = {};
+						let exactHTMLKeyMatch = false,
+							filesConcat = "";
+						for (const element of formatFileArray) {
+							HTMLFiles[element] = fs.readFileSync(element, "utf8");
+							filesConcat = filesConcat + HTMLFiles[element];
+						}
+						const cacheHTMLKey = `Linux-cacheFormatHTML-${crypto
+							.createHash("sha256")
+							.update(filesConcat)
+							.digest("hex")}`;
+						try {
+							const cacheKey = await cache.restoreCache(
+								cacheHTMLPath,
+								cacheHTMLKey,
+								["Linux-cacheFormatHTML-"]
+							);
+							if (!cacheKey) {
+								core.info("No HTML cache");
+							} else
+								exactHTMLKeyMatch = isExactKeyMatch(cacheHTMLKey, cacheKey);
+						} catch (error) {
+							if (error.name === cache.ValidationError.name) {
+								throw error;
+							} else {
+								core.warning(error.message);
+							}
+						}
 						for (const element of formatFileArray) {
 							core.debug(element);
-							fs.writeFileSync(
-								element,
-								prettier.format(fs.readFileSync(element, "utf8"), defaultOpts)
+							if (fs.existsSync(`${element}.cache`)) {
+								const cachedFile = fs.readFileSync(`${element}.cache`, "utf8");
+								if (HTMLFiles[element] === cachedFile) {
+									await io.cp(`${element}.prettier.cache`, element);
+									formatCacheList.push(element);
+									continue;
+								}
+							}
+							const formatted = prettier.format(
+								HTMLFiles[element],
+								defaultOpts
 							);
+							if (HTMLFiles[element].length > 10000) {
+								formatCacheList.push(element);
+								fs.writeFileSync(`${element}.cache`, HTMLFiles[element]);
+								fs.writeFileSync(`${element}.prettier.cache`, formatted);
+							}
+							fs.writeFileSync(element, formatted);
 						}
+						if (formatCacheList.length >= 1) {
+							if (!exactHTMLKeyMatch) {
+								try {
+									await cache.saveCache(cacheHTMLPath, cacheHTMLKey);
+								} catch (error) {
+									if (error.name === cache.ValidationError.name) {
+										throw error;
+									} else if (error.name === cache.ReserveCacheError.name) {
+										core.info(error.message);
+									} else {
+										core.warning(error.message);
+									}
+								}
+							}
+							for (const element of formatCacheList) {
+								await io.rmRF(`${element}.cache`);
+								await io.rmRF(`${element}.prettier.cache`);
+							}
+						}
+						return;
 					},
 				});
 			}

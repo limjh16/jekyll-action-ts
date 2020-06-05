@@ -1,6 +1,6 @@
 {
   "name": "jekyll-action-ts",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "private": true,
   "description": "A GitHub Action to build and publish Jekyll sites to GitHub Pages without Docker",
   "main": "src/main.ts",
