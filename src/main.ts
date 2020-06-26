@@ -31,9 +31,9 @@ async function run(): Promise<void> {
 			INPUT_RESTORE_KEYS = getInputAsArray("restore-keys"),
 			INPUT_FORMAT_OUTPUT = core.getInput("format_output"),
 			INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"),
-			INPUT_PRETTIER_IGNORE = getInputAsArray("prettier_ignore");
-		const paths = ["vendor/bundle"];
-		if (INPUT_RESTORE_KEYS) restoreKeys = INPUT_RESTORE_KEYS;
+			INPUT_PRETTIER_IGNORE = getInputAsArray("prettier_ignore"),
+			paths = ["vendor/bundle"];
+		if (INPUT_RESTORE_KEYS.length > 0) restoreKeys = INPUT_RESTORE_KEYS;
 		else restoreKeys = ["Linux-gems-", "bundle-use-ruby-Linux-gems-"];
 
 		await measure({
