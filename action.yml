@@ -7,6 +7,9 @@ inputs:
   gem_src:  
     description: 'The Jekyll Gemfile directory'
     required: false
+  custom_opts:  
+    description: 'Custom Jekyll build options https://jekyllrb.com/docs/configuration/options/'
+    required: false
   enable_cache:  
     description: 'Enable caching within the action'
     required: false

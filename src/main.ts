@@ -26,6 +26,7 @@ async function run(): Promise<void> {
 		const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}),
 			SRC = core.getInput("src", {}),
 			INPUT_GEM_SRC = core.getInput("gem_src", {}),
+			INPUT_CUSTOM_OPTS = core.getInput("custom_opts", {}),
 			INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}),
 			INPUT_KEY = core.getInput("key", {}),
 			INPUT_RESTORE_KEYS = getInputAsArray("restore-keys"),
@@ -177,7 +178,9 @@ async function run(): Promise<void> {
 				name: "jekyll build",
 				block: async () => {
 					core.exportVariable("JEKYLL_ENV", "production");
-					return await exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
+					return await exec.exec(
+						`bundle exec jekyll build -s ${jekyllSrc} ${INPUT_CUSTOM_OPTS}`
+					);
 				},
 			});
 

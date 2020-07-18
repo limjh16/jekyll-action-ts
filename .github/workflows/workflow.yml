@@ -59,6 +59,10 @@ jobs:
           # restore-keys: ${{ runner.os }}-gems-
           ### In cases where you want to specify the cache key, enable the above 2 inputs
           ### Follows the format here https://github.com/actions/cache
+          #
+          # custom_opts: '--drafts --lsi'
+          ### If you need to specify any Jekyll build options, enable the above input
+          ### Flags accepted can be found here https://jekyllrb.com/docs/configuration/options/#build-command-options
 
       - name: 🚀 deploy
         uses: peaceiris/actions-gh-pages@v3

@@ -35471,7 +35471,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let jekyllSrc = "", gemSrc = "", gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
-            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"), INPUT_PRETTIER_IGNORE = common_1.getInputAsArray("prettier_ignore"), paths = ["vendor/bundle"];
+            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_CUSTOM_OPTS = core.getInput("custom_opts", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"), INPUT_PRETTIER_IGNORE = common_1.getInputAsArray("prettier_ignore"), paths = ["vendor/bundle"];
             if (INPUT_RESTORE_KEYS.length > 0)
                 restoreKeys = INPUT_RESTORE_KEYS;
             else
@@ -35598,7 +35598,7 @@ function run() {
                     name: "jekyll build",
                     block: () => __awaiter(this, void 0, void 0, function* () {
                         core.exportVariable("JEKYLL_ENV", "production");
-                        return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc}`);
+                        return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc} ${INPUT_CUSTOM_OPTS}`);
                     }),
                 });
                 // maybe run this async with saving cache
