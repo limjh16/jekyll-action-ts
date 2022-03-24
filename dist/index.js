@@ -3419,8 +3419,8 @@ const common_1 = __webpack_require__(268);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let jekyllSrc = "", gemSrc = "", gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
-            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_CUSTOM_OPTS = core.getInput("custom_opts", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"), INPUT_PRETTIER_IGNORE = common_1.getInputAsArray("prettier_ignore"), paths = ["vendor/bundle"];
+            let jekyllSrc = "", jekyllEnv = "", gemSrc = "", gemArr, jekyllArr, hash, exactKeyMatch, installFailure = false, restoreKeys, key;
+            const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}), INPUT_JEKYLL_ENV = core.getInput("jekyll_env", {}) || "production", SRC = core.getInput("src", {}), INPUT_GEM_SRC = core.getInput("gem_src", {}), INPUT_CUSTOM_OPTS = core.getInput("custom_opts", {}), INPUT_ENABLE_CACHE = core.getInput("enable_cache", {}), INPUT_KEY = core.getInput("key", {}), INPUT_RESTORE_KEYS = common_1.getInputAsArray("restore-keys"), INPUT_FORMAT_OUTPUT = core.getInput("format_output"), INPUT_PRETTIER_OPTS = core.getInput("prettier_opts"), INPUT_PRETTIER_IGNORE = common_1.getInputAsArray("prettier_ignore"), paths = ["vendor/bundle"];
             if (INPUT_RESTORE_KEYS.length > 0)
                 restoreKeys = INPUT_RESTORE_KEYS;
             else
@@ -3542,11 +3542,21 @@ function run() {
                     return;
                 }),
             });
+            // Resolve Jekyll environment
+            if (INPUT_JEKYLL_ENV) {
+                jekyllEnv = INPUT_JEKYLL_ENV;
+                core.debug(`Using parameter value ${jekyllEnv} as the environment`);
+            }
+            else {
+                jekyllEnv = "production";
+                core.debug(`Using default parameter value 'production' as the environment`);
+            }
+            core.debug(`Resolved ${jekyllEnv} as the environment`);
             if (!installFailure) {
                 yield common_1.measure({
                     name: "jekyll build",
                     block: () => __awaiter(this, void 0, void 0, function* () {
-                        core.exportVariable("JEKYLL_ENV", "production");
+                        core.exportVariable("JEKYLL_ENV", jekyllEnv);
                         return yield exec.exec(`bundle exec jekyll build -s ${jekyllSrc} ${INPUT_CUSTOM_OPTS}`);
                     }),
                 });
