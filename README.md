@@ -81,7 +81,7 @@ on:
 
 jobs:
   jekyll:
-    runs-on: ubuntu-16.04 # can change this to ubuntu-latest if you prefer
+    runs-on: ubuntu-latest
     steps:
       - name: 📂 setup
         uses: actions/checkout@v2
