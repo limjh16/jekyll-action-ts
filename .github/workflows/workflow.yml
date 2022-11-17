@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+  # Allows a run of this workflow to be triggerred manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   jekyll:
