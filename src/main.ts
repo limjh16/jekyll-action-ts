@@ -15,6 +15,7 @@ import { measure, isExactKeyMatch, getInputAsArray } from "./common";
 async function run(): Promise<void> {
 	try {
 		let jekyllSrc = "",
+			jekyllEnv = "",
 			gemSrc = "",
 			gemArr: string[],
 			jekyllArr: string[],
@@ -24,6 +25,7 @@ async function run(): Promise<void> {
 			restoreKeys: string[],
 			key: string;
 		const INPUT_JEKYLL_SRC = core.getInput("jekyll_src", {}),
+			INPUT_JEKYLL_ENV = core.getInput("jekyll_env", {}) || "production",
 			SRC = core.getInput("src", {}),
 			INPUT_GEM_SRC = core.getInput("gem_src", {}),
 			INPUT_CUSTOM_OPTS = core.getInput("custom_opts", {}),
@@ -173,11 +175,23 @@ async function run(): Promise<void> {
 			},
 		});
 
+		// Resolve Jekyll environment
+		if (INPUT_JEKYLL_ENV) {
+			jekyllEnv = INPUT_JEKYLL_ENV;
+			core.debug(`Using parameter value ${jekyllEnv} as the environment`);
+		} else {
+			jekyllEnv = "production";
+			core.debug(
+				`Using default parameter value 'production' as the environment`
+			);
+		}
+		core.debug(`Resolved ${jekyllEnv} as the environment`);
+
 		if (!installFailure) {
 			await measure({
 				name: "jekyll build",
 				block: async () => {
-					core.exportVariable("JEKYLL_ENV", "production");
+					core.exportVariable("JEKYLL_ENV", jekyllEnv);
 					return await exec.exec(
 						`bundle exec jekyll build -s ${jekyllSrc} ${INPUT_CUSTOM_OPTS}`
 					);

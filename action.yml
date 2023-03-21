@@ -4,6 +4,9 @@ inputs:
   jekyll_src:  
     description: 'The Jekyll website source directory'
     required: false
+  jekyll_env:
+    description: 'JEKYLL_ENV environment variable or jekyll.environment Liquid variable'
+    required: false
   gem_src:  
     description: 'The Jekyll Gemfile directory'
     required: false
