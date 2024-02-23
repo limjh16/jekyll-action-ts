@@ -32,7 +32,7 @@ inputs:
     description: Skips formatting certain files / paths
     required: false
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
 branding:
   icon: 'book'
